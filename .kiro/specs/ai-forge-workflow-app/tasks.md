@@ -8,7 +8,7 @@ Each task builds incrementally on previous work, with property-based tests integ
 
 ## Tasks
 
-- [ ] 1. Set up project structure and core infrastructure
+- [x] 1. Set up project structure and core infrastructure
   - Create Xcode project for macOS SwiftUI application (minimum macOS 14.0)
   - Set up folder structure: App/, Views/, Shared/ (Models, Services, Extensions, Tools), Resources/, Supporting Files/
   - Configure SwiftData model container in app entry point

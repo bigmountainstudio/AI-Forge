@@ -1,0 +1,95 @@
+// Copyright ©2026 Big Mountain Studio. All rights reserved. X: @BigMtnStudio
+
+import SwiftData
+import Foundation
+
+@Model
+final class WorkflowStepModel {
+    var id: UUID
+    var stepNumber: Int
+    var title: String
+    var stepDescription: String
+    var status: StepStatus
+    var completedAt: Date?
+    var errorMessage: String?
+    
+    init(stepNumber: Int, title: String, stepDescription: String) {
+        self.id = UUID()
+        self.stepNumber = stepNumber
+        self.title = title
+        self.stepDescription = stepDescription
+        self.status = .pending
+    }
+    
+    static func createDefaultSteps() -> [WorkflowStepModel] {
+        return [
+            WorkflowStepModel(
+                stepNumber: 1,
+                title: "Prepare Source Files",
+                stepDescription: "Place source files in appropriate directories"
+            ),
+            WorkflowStepModel(
+                stepNumber: 2,
+                title: "Generate Optimized Dataset",
+                stepDescription: "Run script to parse files and create training data"
+            ),
+            WorkflowStepModel(
+                stepNumber: 3,
+                title: "Configure Fine-Tuning",
+                stepDescription: "Update configuration with model settings"
+            ),
+            WorkflowStepModel(
+                stepNumber: 4,
+                title: "Run Fine-Tuning",
+                stepDescription: "Execute the fine-tuning process"
+            ),
+            WorkflowStepModel(
+                stepNumber: 5,
+                title: "Evaluate for Overfitting",
+                stepDescription: "Test model on held-out test data"
+            ),
+            WorkflowStepModel(
+                stepNumber: 6,
+                title: "Convert and Deploy",
+                stepDescription: "Convert model for inference"
+            )
+        ]
+    }
+}
+
+enum StepStatus: String, Codable {
+    case pending
+    case inProgress
+    case completed
+    case failed
+}
+
+// MARK: - Computed Properties
+extension WorkflowStepModel {
+    var viewStatusIcon: String {
+        switch status {
+        case .pending: return "circle"
+        case .inProgress: return "arrow.clockwise.circle.fill"
+        case .completed: return "checkmark.circle.fill"
+        case .failed: return "xmark.circle.fill"
+        }
+    }
+    
+    var viewStatusColor: String {
+        switch status {
+        case .pending: return "gray"
+        case .inProgress: return "blue"
+        case .completed: return "green"
+        case .failed: return "red"
+        }
+    }
+}
+
+// MARK: - Preview Helpers
+extension WorkflowStepModel {
+    static let mock = WorkflowStepModel(
+        stepNumber: 1,
+        title: "Prepare Source Files",
+        stepDescription: "Place source files in appropriate directories"
+    )
+}
