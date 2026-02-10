@@ -18,7 +18,7 @@ struct HomeView: View {
             if let project = selectedProject {
                 WorkflowView(project: project)
             } else {
-                Text("Select a project to begin")
+                Text("Select or create a project to begin")
                     .foregroundStyle(.secondary)
             }
         }

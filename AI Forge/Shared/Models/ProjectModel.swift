@@ -5,7 +5,6 @@ import Foundation
 
 @Model
 final class ProjectModel {
-    @Attribute(.unique) var id: UUID
     var name: String
     var domainName: String
     var domainDescription: String
@@ -18,7 +17,6 @@ final class ProjectModel {
     @Relationship(deleteRule: .cascade) var configuration: FineTuningConfigurationModel?
     
     init(name: String, domainName: String, domainDescription: String) {
-        self.id = UUID()
         self.name = name
         self.domainName = domainName
         self.domainDescription = domainDescription

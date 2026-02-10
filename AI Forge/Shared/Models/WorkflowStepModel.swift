@@ -3,9 +3,15 @@
 import SwiftData
 import Foundation
 
+enum StepStatus: String, Codable {
+    case pending
+    case inProgress
+    case completed
+    case failed
+}
+
 @Model
 final class WorkflowStepModel {
-    var id: UUID
     var stepNumber: Int
     var title: String
     var stepDescription: String
@@ -14,7 +20,6 @@ final class WorkflowStepModel {
     var errorMessage: String?
     
     init(stepNumber: Int, title: String, stepDescription: String) {
-        self.id = UUID()
         self.stepNumber = stepNumber
         self.title = title
         self.stepDescription = stepDescription
@@ -55,13 +60,6 @@ final class WorkflowStepModel {
             )
         ]
     }
-}
-
-enum StepStatus: String, Codable {
-    case pending
-    case inProgress
-    case completed
-    case failed
 }
 
 // MARK: - Computed Properties

@@ -3,9 +3,24 @@
 import SwiftData
 import Foundation
 
+enum ConfigurationError: Error, LocalizedError {
+    case emptyModelName
+    case invalidLearningRate
+    case invalidBatchSize
+    case invalidEpochs
+    
+    var errorDescription: String? {
+        switch self {
+        case .emptyModelName: return "Model name cannot be empty"
+        case .invalidLearningRate: return "Learning rate must be greater than 0"
+        case .invalidBatchSize: return "Batch size must be greater than 0"
+        case .invalidEpochs: return "Number of epochs must be greater than 0"
+        }
+    }
+}
+
 @Model
 final class FineTuningConfigurationModel {
-    var id: UUID
     var modelName: String
     var learningRate: Double
     var batchSize: Int
@@ -15,7 +30,6 @@ final class FineTuningConfigurationModel {
     var additionalParameters: [String: String]
     
     init() {
-        self.id = UUID()
         self.modelName = ""
         self.learningRate = 0.0001
         self.batchSize = 8
@@ -47,22 +61,6 @@ extension FineTuningConfigurationModel {
         }
         guard numberOfEpochs > 0 else {
             throw ConfigurationError.invalidEpochs
-        }
-    }
-}
-
-enum ConfigurationError: Error, LocalizedError {
-    case emptyModelName
-    case invalidLearningRate
-    case invalidBatchSize
-    case invalidEpochs
-    
-    var errorDescription: String? {
-        switch self {
-        case .emptyModelName: return "Model name cannot be empty"
-        case .invalidLearningRate: return "Learning rate must be greater than 0"
-        case .invalidBatchSize: return "Batch size must be greater than 0"
-        case .invalidEpochs: return "Number of epochs must be greater than 0"
         }
     }
 }

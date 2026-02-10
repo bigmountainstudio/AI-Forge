@@ -15,8 +15,8 @@ Each task builds incrementally on previous work, with property-based tests integ
   - Add file header template to all new files: `// Copyright ©2026 Big Mountain Studio. All rights reserved. X: @BigMtnStudio`
   - _Requirements: All requirements (foundation)_
 
-- [ ] 2. Implement data models (SwiftData layer)
-  - [ ] 2.1 Create StepStatus enum and WorkflowStepModel
+- [x] 2. Implement data models (SwiftData layer)
+  - [x] 2.1 Create StepStatus enum and WorkflowStepModel
     - Define `StepStatus` enum with cases: pending, inProgress, completed, failed
     - Create `WorkflowStepModel` with @Model macro
     - Add properties: id, stepNumber, title, stepDescription, status, completedAt, errorMessage
@@ -29,7 +29,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 13: Step State Preservation During Navigation**
     - **Validates: Requirements 3.6**
 
-  - [ ] 2.3 Create FineTuningConfigurationModel
+  - [x] 2.3 Create FineTuningConfigurationModel
     - Create `FineTuningConfigurationModel` with @Model macro
     - Add properties: id, modelName, learningRate, batchSize, numberOfEpochs, outputDirectory, datasetPath, additionalParameters
     - Implement validation methods: `isValid`, `validate()`
@@ -45,7 +45,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 24: Configuration Persistence Round-Trip**
     - **Validates: Requirements 6.4, 6.5**
 
-  - [ ] 2.6 Create ProjectModel
+  - [x] 2.6 Create ProjectModel
     - Create `ProjectModel` with @Model macro
     - Add properties: id (unique), name, domainName, domainDescription, createdAt, updatedAt, currentStepIndex, projectDirectoryPath
     - Add relationships: workflowSteps (one-to-many, cascade delete), configuration (one-to-one, cascade delete)
@@ -62,7 +62,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 8: Domain Information Persistence**
     - **Validates: Requirements 2.2**
 
-  - [ ] 2.9 Create SourceFileReference struct
+  - [x] 2.9 Create SourceFileReference struct
     - Create `SourceFileReference` struct (Codable, Identifiable)
     - Add properties: id, fileName, filePath, fileSize, category, addedAt
     - Define `SourceFileCategory` enum: apiDocumentation, codeExamples
