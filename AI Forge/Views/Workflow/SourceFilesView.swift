@@ -98,8 +98,18 @@ struct SourceFilesView: View {
                         }
                         
                         Spacer()
+                        
+                        Button {
+                            Task {
+                                await observable.removeSourceFile(file)
+                            }
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    .contextMenu {
                         Button(role: .destructive) {
                             Task {
                                 await observable.removeSourceFile(file)

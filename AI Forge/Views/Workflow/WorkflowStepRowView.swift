@@ -11,8 +11,14 @@ struct WorkflowStepRowView: View {
                 .foregroundStyle(colorForStatus(step.status))
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(step.title)
-                    .font(.headline)
+                HStack {
+                    Text("Step \(step.stepNumber)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(step.title)
+                        .font(.headline)
+                }
                 
                 Text(step.stepDescription)
                     .font(.subheadline)

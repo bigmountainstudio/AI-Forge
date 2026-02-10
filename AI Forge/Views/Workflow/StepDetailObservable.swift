@@ -47,26 +47,36 @@ final class StepDetailObservable {
         }
         
         let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
+        var addedCount = 0
         
-        do {
-            for url in urls {
-                do {
-                    let reference = try fileSystemManager.addSourceFile(
-                        at: url,
-                        to: projectURL,
-                        category: .apiDocumentation
-                    )
-                    sourceFiles.append(reference)
-                } catch {
-                    errorMessage = "Failed to add file '\(url.lastPathComponent)': \(error.localizedDescription)"
-                    // Continue with other files even if one fails
+        for url in urls {
+            // Start accessing security-scoped resource
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessing {
+                    url.stopAccessingSecurityScopedResource()
                 }
             }
             
-            // Clear error if at least some files were added successfully
-            if sourceFiles.isEmpty == false {
-                errorMessage = nil
+            do {
+                let reference = try fileSystemManager.addSourceFile(
+                    at: url,
+                    to: projectURL,
+                    category: .apiDocumentation
+                )
+                sourceFiles.append(reference)
+                addedCount += 1
+            } catch {
+                errorMessage = "Failed to add file '\(url.lastPathComponent)': \(error.localizedDescription)"
+                // Continue with other files even if one fails
             }
+        }
+        
+        // Clear error if at least some files were added successfully
+        if addedCount > 0 {
+            errorMessage = nil
+            // Reload to ensure UI is in sync with file system
+            await loadSourceFiles()
         }
     }
     

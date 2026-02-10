@@ -7,6 +7,7 @@ import Foundation
 final class ProjectManagerObservable {
     private let modelContext: ModelContext
     private let fileSystemManager: FileSystemManager
+    private var saveTask: Task<Void, Never>?
     
     var projects: [ProjectModel] = []
     var selectedProject: ProjectModel?
@@ -139,6 +140,42 @@ final class ProjectManagerObservable {
             errorMessage = "Failed to save changes to project '\(project.name)': \(error.localizedDescription)"
             ErrorLogger.logCritical(error, message: "Failed to save changes to project '\(project.name)'", category: .database)
             throw wrappedError
+        }
+    }
+    
+    /// Debounced auto-save for configuration changes
+    /// Delays save by 5 seconds to avoid excessive saves during rapid changes
+    func debouncedSave(for project: ProjectModel) {
+        // Cancel any pending save task
+        saveTask?.cancel()
+        
+        // Create new save task with 5 second delay
+        saveTask = Task {
+            // Wait 5 seconds
+            try? await Task.sleep(for: .seconds(5))
+            
+            // Check if task was cancelled
+            guard Task.isCancelled == false else { return }
+            
+            // Perform save
+            do {
+                try saveProject(project)
+                ErrorLogger.log("Auto-saved project '\(project.name)' after configuration change", severity: .info, category: .database)
+            } catch {
+                // Error already logged in saveProject
+                ErrorLogger.log("Debounced auto-save failed for project '\(project.name)'", severity: .error, category: .database)
+            }
+        }
+    }
+    
+    /// Save project state on step progression
+    func saveProjectOnStepProgression(_ project: ProjectModel) throws {
+        do {
+            try saveProject(project)
+            ErrorLogger.log("Auto-saved project '\(project.name)' after step progression", severity: .info, category: .database)
+        } catch {
+            ErrorLogger.logCritical(error, message: "Failed to auto-save project '\(project.name)' after step progression", category: .database)
+            throw error
         }
     }
     

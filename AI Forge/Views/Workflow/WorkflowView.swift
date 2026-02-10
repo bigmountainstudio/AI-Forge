@@ -12,7 +12,7 @@ struct WorkflowView: View {
     
     var body: some View {
         NavigationStack {
-            List(project.workflowSteps, selection: $selectedStep) { step in
+            List(project.workflowSteps.sorted(by: { $0.stepNumber < $1.stepNumber }), selection: $selectedStep) { step in
                 NavigationLink(value: step) {
                     WorkflowStepRowView(step: step)
                 }

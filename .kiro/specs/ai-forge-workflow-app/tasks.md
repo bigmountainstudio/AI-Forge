@@ -343,19 +343,19 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Test error recovery mechanisms
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
-- [ ] 11. Implement state persistence and auto-save
-  - [ ] 11.1 Add auto-save to WorkflowEngineObservable
+- [x] 11. Implement state persistence and auto-save
+  - [x] 11.1 Add auto-save to WorkflowEngineObservable
     - Call modelContext.save() after marking step complete
     - Call modelContext.save() after step failure
     - Add error handling for save failures
     - _Requirements: 10.1_
 
-  - [ ] 11.2 Add auto-save to ProjectManagerObservable
+  - [x] 11.2 Add auto-save to ProjectManagerObservable
     - Implement debounced save on configuration changes
     - Save project state on step progression
     - _Requirements: 10.2_
 
-  - [ ] 11.3 Add application shutdown handling
+  - [x] 11.3 Add application shutdown handling
     - Implement applicationWillTerminate handler
     - Ensure all pending saves complete before exit
     - _Requirements: 10.3_
@@ -368,7 +368,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 30: Save Failure Error Handling**
     - **Validates: Requirements 10.6**
 
-- [ ] 12. Checkpoint - Test complete workflow
+- [-] 12. Checkpoint - Test complete workflow
   - Manually test creating a project, adding source files, progressing through steps, ask the user if questions arise.
 
 - [ ] 13. Implement remaining property-based tests

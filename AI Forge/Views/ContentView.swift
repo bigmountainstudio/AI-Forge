@@ -5,6 +5,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appDelegate) private var appDelegate
     @State private var projectManager: ProjectManagerObservable?
     @State private var selectedProject: ProjectModel?
     
@@ -27,6 +28,8 @@ struct ContentView: View {
         .onAppear {
             if projectManager == nil {
                 projectManager = createProjectManager()
+                // Set modelContext in AppDelegate for shutdown handling
+                appDelegate?.modelContext = modelContext
             }
         }
     }

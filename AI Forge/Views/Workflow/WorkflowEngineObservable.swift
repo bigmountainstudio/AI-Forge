@@ -54,21 +54,42 @@ final class WorkflowEngineObservable {
         step.completedAt = Date()
         step.errorMessage = nil
         
-        try modelContext.save()
+        // Auto-save after marking step complete
+        do {
+            try modelContext.save()
+            ErrorLogger.log("Auto-saved project state after completing step '\(step.title)'", severity: .info, category: .database)
+        } catch {
+            ErrorLogger.logCritical(error, message: "Failed to auto-save after completing step '\(step.title)'", category: .database)
+            throw WorkflowError.saveFailed
+        }
     }
     
     func markStepFailed(_ step: WorkflowStepModel, error: String) throws {
         step.status = .failed
         step.errorMessage = error
         
-        try modelContext.save()
+        // Auto-save after marking step failed
+        do {
+            try modelContext.save()
+            ErrorLogger.log("Auto-saved project state after step '\(step.title)' failed", severity: .info, category: .database)
+        } catch {
+            ErrorLogger.logCritical(error, message: "Failed to auto-save after step '\(step.title)' failed", category: .database)
+            throw WorkflowError.saveFailed
+        }
     }
     
     func retryStep(_ step: WorkflowStepModel) throws {
         step.status = .pending
         step.errorMessage = nil
         
-        try modelContext.save()
+        // Auto-save after resetting step
+        do {
+            try modelContext.save()
+            ErrorLogger.log("Auto-saved project state after retrying step '\(step.title)'", severity: .info, category: .database)
+        } catch {
+            ErrorLogger.logCritical(error, message: "Failed to auto-save after retrying step '\(step.title)'", category: .database)
+            throw WorkflowError.saveFailed
+        }
     }
 }
 
@@ -76,12 +97,14 @@ enum WorkflowError: Error, LocalizedError {
     case cannotProgress
     case stepExecutionFailed
     case invalidState
+    case saveFailed
     
     var errorDescription: String? {
         switch self {
         case .cannotProgress: return "Cannot progress to next step"
         case .stepExecutionFailed: return "Step execution failed"
         case .invalidState: return "Invalid workflow state"
+        case .saveFailed: return "Failed to save workflow state"
         }
     }
 }
