@@ -7,7 +7,7 @@ import SwiftData
 struct AIForgeApp: App {
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            ContentView()
         }
         .modelContainer(for: [ProjectModel.self, WorkflowStepModel.self, FineTuningConfigurationModel.self])
     }

@@ -200,15 +200,15 @@ Each task builds incrementally on previous work, with property-based tests integ
 - [x] 7. Checkpoint - Ensure observable classes compile
   - Ensure all observable classes compile without errors, ask the user if questions arise.
 
-- [ ] 8. Implement presentation layer (SwiftUI views)
-  - [ ] 8.1 Create AIForgeApp entry point
+- [x] 8. Implement presentation layer (SwiftUI views)
+  - [x] 8.1 Create AIForgeApp entry point
     - Create `AIForgeApp` struct with @main attribute
     - Define WindowGroup scene with ContentView
     - Configure modelContainer for ProjectModel, WorkflowStepModel, FineTuningConfigurationModel
     - Add file header
     - _Requirements: All (foundation)_
 
-  - [ ] 8.2 Create ContentView (main layout)
+  - [x] 8.2 Create ContentView (main layout)
     - Create `ContentView` with NavigationSplitView
     - Add @Environment(\.modelContext) property
     - Add @State properties: projectManager, selectedProject
@@ -218,7 +218,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview with ProjectModel.preview
     - _Requirements: 13.1, 13.2_
 
-  - [ ] 8.3 Create ProjectListView
+  - [x] 8.3 Create ProjectListView
     - Create `ProjectListView` with List of projects
     - Add @Bindable projectManager and @Binding selectedProject
     - Add @State showingCreateProject for sheet presentation
@@ -229,7 +229,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 1.4, 1.5, 13.1_
 
-  - [ ] 8.4 Create ProjectRowView
+  - [x] 8.4 Create ProjectRowView
     - Create `ProjectRowView` displaying project information
     - Show project name (headline), domain name (subheadline)
     - Show current step progress: "Step X of 6"
@@ -237,7 +237,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add vertical padding
     - _Requirements: 15.4_
 
-  - [ ] 8.5 Create ProjectCreationView
+  - [x] 8.5 Create ProjectCreationView
     - Create `ProjectCreationView` with Form
     - Add @Environment(\.dismiss) and @Bindable projectManager
     - Add @State properties: projectName, domainName, domainDescription, isCreating, errorMessage
@@ -249,7 +249,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 1.1, 1.2, 2.1, 2.2_
 
-  - [ ] 8.6 Create WorkflowView
+  - [x] 8.6 Create WorkflowView
     - Create `WorkflowView` with NavigationStack
     - Add project parameter and @State properties: workflowEngine, selectedStep
     - Display List of workflow steps with NavigationLink
@@ -260,7 +260,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 3.1, 13.2, 13.3_
 
-  - [ ] 8.7 Create WorkflowStepRowView
+  - [x] 8.7 Create WorkflowStepRowView
     - Create `WorkflowStepRowView` displaying step information
     - Show status icon using `step.viewStatusIcon` with color
     - Show step title (headline) and description (subheadline)
@@ -269,7 +269,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add vertical padding
     - _Requirements: 3.3, 15.6_
 
-  - [ ] 8.8 Create StepDetailView
+  - [x] 8.8 Create StepDetailView
     - Create `StepDetailView` with ScrollView
     - Add parameters: step, project, workflowEngine
     - Add @State stepObservable property
@@ -284,7 +284,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 3.3, 5.2, 7.2, 8.2, 9.2, 13.3_
 
-  - [ ] 8.9 Create SourceFilesView (step 1 content)
+  - [x] 8.9 Create SourceFilesView (step 1 content)
     - Create `SourceFilesView` displaying source file list
     - Add observable parameter (StepDetailObservable)
     - Display List of source files with file name, size, category
@@ -293,7 +293,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Show empty state when no files
     - _Requirements: 4.1, 4.4, 4.5_
 
-  - [ ] 8.10 Create ConfigurationView (step 3 content)
+  - [x] 8.10 Create ConfigurationView (step 3 content)
     - Create `ConfigurationView` with Form
     - Add observable parameter (StepDetailObservable)
     - Display TextField for model name
@@ -306,7 +306,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Show validation errors inline
     - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 9. Checkpoint - Ensure UI compiles and runs
+- [x] 9. Checkpoint - Ensure UI compiles and runs
   - Build and run the application, verify basic navigation works, ask the user if questions arise.
 
 - [ ] 10. Implement error handling and validation
