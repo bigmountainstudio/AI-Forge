@@ -70,11 +70,11 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add preview helpers: `mock`, `mocks`
     - _Requirements: 4.1, 4.4_
 
-- [ ] 3. Checkpoint - Ensure data models compile
+- [x] 3. Checkpoint - Ensure data models compile
   - Ensure all data models compile without errors, ask the user if questions arise.
 
-- [ ] 4. Implement service layer (Business logic)
-  - [ ] 4.1 Create FileSystemManager
+- [x] 4. Implement service layer (Business logic)
+  - [x] 4.1 Create FileSystemManager
     - Create `FileSystemManager` class with FileManager instance
     - Initialize with base projects directory in Application Support
     - Implement `createProjectDirectory(projectName:)` - creates root and subdirectories
@@ -101,7 +101,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 31: File Placement in Correct Subdirectories**
     - **Validates: Requirements 11.3**
 
-  - [ ] 4.5 Create PythonScriptExecutor actor
+  - [x] 4.5 Create PythonScriptExecutor actor
     - Create `PythonScriptExecutor` actor for thread-safe script execution
     - Add property: `currentProcess` (optional Process)
     - Implement `executeScript(scriptPath:arguments:workingDirectory:outputHandler:)` async method
