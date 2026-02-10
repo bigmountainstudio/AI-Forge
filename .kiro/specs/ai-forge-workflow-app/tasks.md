@@ -128,11 +128,11 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Test error handling when Python is not found
     - _Requirements: 12.1_
 
-- [ ] 5. Checkpoint - Ensure service layer compiles
+- [x] 5. Checkpoint - Ensure service layer compiles
   - Ensure all service classes compile without errors, ask the user if questions arise.
 
-- [ ] 6. Implement observable classes (State management)
-  - [ ] 6.1 Create ProjectManagerObservable
+- [x] 6. Implement observable classes (State management)
+  - [x] 6.1 Create ProjectManagerObservable
     - Create `ProjectManagerObservable` class with @Observable macro
     - Add properties: modelContext, fileSystemManager, projects array, selectedProject, isLoading, errorMessage
     - Implement `createProject(name:domainName:domainDescription:)` async method
@@ -156,7 +156,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 7: Project Deletion Removes from List**
     - **Validates: Requirements 1.4, 1.6, 1.7, 10.4, 10.5**
 
-  - [ ] 6.4 Create WorkflowEngineObservable
+  - [x] 6.4 Create WorkflowEngineObservable
     - Create `WorkflowEngineObservable` class with @Observable macro
     - Add properties: modelContext, pythonExecutor, fileSystemManager, currentProject, currentStep, isExecutingStep, executionOutput
     - Implement `loadProject(_:)` method to set current project and step
@@ -173,7 +173,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 12: Prerequisite Enforcement**
     - **Validates: Requirements 3.4, 3.5**
 
-  - [ ] 6.6 Create StepDetailObservable
+  - [x] 6.6 Create StepDetailObservable
     - Create `StepDetailObservable` class with @Observable macro
     - Add properties: workflowEngine, fileSystemManager, pythonExecutor, currentStep, currentProject, sourceFiles, configuration, executionOutput, isExecuting, errorMessage
     - Implement `loadStep(_:project:)` async method
@@ -197,7 +197,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 26: Process Cancellation**
     - **Validates: Requirements 5.3, 5.4, 7.3, 7.4, 7.5, 8.3, 8.4, 9.3, 9.4**
 
-- [ ] 7. Checkpoint - Ensure observable classes compile
+- [x] 7. Checkpoint - Ensure observable classes compile
   - Ensure all observable classes compile without errors, ask the user if questions arise.
 
 - [ ] 8. Implement presentation layer (SwiftUI views)
