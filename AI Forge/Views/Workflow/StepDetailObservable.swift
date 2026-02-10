@@ -41,21 +41,32 @@ final class StepDetailObservable {
     }
     
     func addSourceFiles(_ urls: [URL]) async {
-        guard let project = currentProject else { return }
+        guard let project = currentProject else {
+            errorMessage = "Cannot add source files: No project is currently loaded"
+            return
+        }
         
         let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
         
         do {
             for url in urls {
-                let reference = try fileSystemManager.addSourceFile(
-                    at: url,
-                    to: projectURL,
-                    category: .apiDocumentation
-                )
-                sourceFiles.append(reference)
+                do {
+                    let reference = try fileSystemManager.addSourceFile(
+                        at: url,
+                        to: projectURL,
+                        category: .apiDocumentation
+                    )
+                    sourceFiles.append(reference)
+                } catch {
+                    errorMessage = "Failed to add file '\(url.lastPathComponent)': \(error.localizedDescription)"
+                    // Continue with other files even if one fails
+                }
             }
-        } catch {
-            errorMessage = "Failed to add source files: \(error.localizedDescription)"
+            
+            // Clear error if at least some files were added successfully
+            if sourceFiles.isEmpty == false {
+                errorMessage = nil
+            }
         }
     }
     
@@ -63,8 +74,9 @@ final class StepDetailObservable {
         do {
             try fileSystemManager.removeSourceFile(reference)
             sourceFiles.removeAll { $0.id == reference.id }
+            errorMessage = nil // Clear error on success
         } catch {
-            errorMessage = "Failed to remove source file: \(error.localizedDescription)"
+            errorMessage = "Failed to remove file '\(reference.fileName)': \(error.localizedDescription). The file may have already been deleted or is inaccessible."
         }
     }
     
@@ -73,8 +85,17 @@ final class StepDetailObservable {
     }
     
     func executeStep() async {
-        guard let step = currentStep,
-              let project = currentProject else { return }
+        guard let step = currentStep else {
+            errorMessage = "Cannot execute step: No step is currently loaded"
+            ErrorLogger.log("Attempted to execute step but no step is loaded", severity: .warning, category: .workflow)
+            return
+        }
+        
+        guard let project = currentProject else {
+            errorMessage = "Cannot execute step: No project is currently loaded"
+            ErrorLogger.log("Attempted to execute step but no project is loaded", severity: .warning, category: .workflow)
+            return
+        }
         
         isExecuting = true
         executionOutput = ""
@@ -83,16 +104,44 @@ final class StepDetailObservable {
         defer { isExecuting = false }
         
         do {
+            ErrorLogger.log("Starting execution of step '\(step.title)' for project '\(project.name)'", severity: .info, category: .workflow)
+            
             let result = try await executeStepScript(step: step, project: project)
             
             if result.success {
-                try workflowEngine.markStepComplete(step)
+                do {
+                    try workflowEngine.markStepComplete(step)
+                    errorMessage = nil
+                    ErrorLogger.log("Successfully completed step '\(step.title)' for project '\(project.name)'", severity: .info, category: .workflow)
+                } catch {
+                    errorMessage = "Step completed but failed to save state: \(error.localizedDescription)"
+                    ErrorLogger.logError(error, message: "Failed to save completion state for step '\(step.title)'", category: .database)
+                }
             } else {
-                try workflowEngine.markStepFailed(step, error: result.error)
-                errorMessage = result.error
+                // Display stderr output for script failures
+                let errorOutput = result.error.isEmpty == false ? result.error : "Script failed with exit code \(result.exitCode)"
+                
+                do {
+                    try workflowEngine.markStepFailed(step, error: errorOutput)
+                } catch {
+                    errorMessage = "Failed to mark step as failed: \(error.localizedDescription)"
+                    ErrorLogger.logError(error, message: "Failed to mark step '\(step.title)' as failed", category: .database)
+                }
+                
+                errorMessage = "Script execution failed:\n\(errorOutput)\n\nSuggestion: Check the script path, arguments, and ensure all dependencies are installed."
+                ErrorLogger.log("Script execution failed for step '\(step.title)': \(errorOutput)", severity: .error, category: .pythonScript)
             }
         } catch {
-            errorMessage = "Execution failed: \(error.localizedDescription)"
+            let detailedError = "Execution failed for step '\(step.title)': \(error.localizedDescription)\n\nSuggestion: Verify Python is installed and the script exists at the expected location."
+            errorMessage = detailedError
+            ErrorLogger.logCritical(error, message: "Critical failure executing step '\(step.title)' for project '\(project.name)'", category: .pythonScript)
+            
+            do {
+                try workflowEngine.markStepFailed(step, error: error.localizedDescription)
+            } catch {
+                errorMessage = "\(detailedError)\n\nAdditionally, failed to save error state: \(error.localizedDescription)"
+                ErrorLogger.logCritical(error, message: "Failed to save error state for step '\(step.title)'", category: .database)
+            }
         }
     }
     
@@ -102,7 +151,11 @@ final class StepDetailObservable {
     }
     
     private func loadSourceFiles() async {
-        guard let project = currentProject else { return }
+        guard let project = currentProject else {
+            errorMessage = "Cannot load source files: No project is currently loaded"
+            ErrorLogger.log("Attempted to load source files but no project is loaded", severity: .warning, category: .fileSystem)
+            return
+        }
         
         let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
         
@@ -110,8 +163,11 @@ final class StepDetailObservable {
             let apiDocs = try fileSystemManager.listSourceFiles(in: projectURL, category: .apiDocumentation)
             let codeExamples = try fileSystemManager.listSourceFiles(in: projectURL, category: .codeExamples)
             sourceFiles = apiDocs + codeExamples
+            errorMessage = nil // Clear error on success
         } catch {
-            errorMessage = "Failed to load source files: \(error.localizedDescription)"
+            errorMessage = "Failed to load source files from '\(projectURL.path)': \(error.localizedDescription). The project directory may be missing or inaccessible."
+            sourceFiles = [] // Clear list on error
+            ErrorLogger.logError(error, message: "Failed to load source files from '\(projectURL.path)'", category: .fileSystem)
         }
     }
     

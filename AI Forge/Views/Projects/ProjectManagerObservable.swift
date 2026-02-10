@@ -19,26 +19,57 @@ final class ProjectManagerObservable {
     }
     
     func createProject(name: String, domainName: String, domainDescription: String) async throws -> ProjectModel {
-        // Validate project name
-        let validationResult = validateProjectName(name)
-        guard validationResult.isValid else {
-            throw ProjectError.invalidName(validationResult.message)
+        do {
+            // Validate project name
+            let validationResult = validateProjectName(name)
+            guard validationResult.isValid else {
+                let error = ProjectError.invalidName(validationResult.message)
+                errorMessage = "Project creation failed: \(error.localizedDescription)"
+                ErrorLogger.log("Project name validation failed: \(validationResult.message)", severity: .warning, category: .project)
+                throw error
+            }
+            
+            // Create project directory
+            let projectDirectory: URL
+            do {
+                projectDirectory = try fileSystemManager.createProjectDirectory(projectName: name)
+            } catch {
+                let wrappedError = ProjectError.directoryCreationFailed
+                errorMessage = "Failed to create project directory for '\(name)': \(error.localizedDescription)"
+                ErrorLogger.logError(error, message: "Failed to create project directory for '\(name)'", category: .fileSystem)
+                throw wrappedError
+            }
+            
+            // Create project model
+            let project = ProjectModel(name: name, domainName: domainName, domainDescription: domainDescription)
+            project.projectDirectoryPath = projectDirectory.path
+            
+            // Insert into context
+            modelContext.insert(project)
+            
+            // Save context
+            do {
+                try modelContext.save()
+            } catch {
+                let wrappedError = ProjectError.saveFailed
+                errorMessage = "Failed to save project '\(name)' to database: \(error.localizedDescription)"
+                ErrorLogger.logCritical(error, message: "Failed to save project '\(name)' to database", category: .database)
+                throw wrappedError
+            }
+            
+            // Clear any previous error messages on success
+            errorMessage = nil
+            ErrorLogger.log("Successfully created project '\(name)'", severity: .info, category: .project)
+            
+            return project
+        } catch {
+            // Ensure error message is set if not already
+            if errorMessage == nil {
+                errorMessage = "Unexpected error creating project: \(error.localizedDescription)"
+                ErrorLogger.logCritical(error, message: "Unexpected error creating project '\(name)'", category: .project)
+            }
+            throw error
         }
-        
-        // Create project directory
-        let projectDirectory = try fileSystemManager.createProjectDirectory(projectName: name)
-        
-        // Create project model
-        let project = ProjectModel(name: name, domainName: domainName, domainDescription: domainDescription)
-        project.projectDirectoryPath = projectDirectory.path
-        
-        // Insert into context
-        modelContext.insert(project)
-        
-        // Save context
-        try modelContext.save()
-        
-        return project
     }
     
     func loadProjects() async {
@@ -51,29 +82,64 @@ final class ProjectManagerObservable {
         
         do {
             projects = try modelContext.fetch(descriptor)
+            errorMessage = nil // Clear error on success
         } catch {
-            errorMessage = "Failed to load projects: \(error.localizedDescription)"
+            errorMessage = "Failed to load projects from database: \(error.localizedDescription)"
+            projects = [] // Clear projects list on error
+            ErrorLogger.logError(error, message: "Failed to load projects from database", category: .database)
         }
     }
     
     func deleteProject(_ project: ProjectModel) async throws {
-        // Optionally delete project directory
-        let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
-        try? fileSystemManager.deleteProjectDirectory(at: projectURL)
-        
-        // Delete from context
-        modelContext.delete(project)
-        
-        // Save context
-        try modelContext.save()
-        
-        // Reload projects
-        await loadProjects()
+        do {
+            // Optionally delete project directory
+            let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
+            do {
+                try fileSystemManager.deleteProjectDirectory(at: projectURL)
+            } catch {
+                // Log but don't fail if directory deletion fails
+                errorMessage = "Warning: Failed to delete project directory at '\(projectURL.path)': \(error.localizedDescription)"
+                ErrorLogger.logError(error, message: "Failed to delete project directory at '\(projectURL.path)'", category: .fileSystem)
+            }
+            
+            // Delete from context
+            modelContext.delete(project)
+            
+            // Save context
+            do {
+                try modelContext.save()
+            } catch {
+                errorMessage = "Failed to delete project '\(project.name)' from database: \(error.localizedDescription)"
+                ErrorLogger.logCritical(error, message: "Failed to delete project '\(project.name)' from database", category: .database)
+                throw error
+            }
+            
+            // Reload projects
+            await loadProjects()
+            
+            // Clear error message on success
+            errorMessage = nil
+            ErrorLogger.log("Successfully deleted project '\(project.name)'", severity: .info, category: .project)
+        } catch {
+            if errorMessage == nil {
+                errorMessage = "Unexpected error deleting project '\(project.name)': \(error.localizedDescription)"
+                ErrorLogger.logCritical(error, message: "Unexpected error deleting project '\(project.name)'", category: .project)
+            }
+            throw error
+        }
     }
     
     func saveProject(_ project: ProjectModel) throws {
-        project.updatedAt = Date()
-        try modelContext.save()
+        do {
+            project.updatedAt = Date()
+            try modelContext.save()
+            errorMessage = nil // Clear error on success
+        } catch {
+            let wrappedError = ProjectError.saveFailed
+            errorMessage = "Failed to save changes to project '\(project.name)': \(error.localizedDescription)"
+            ErrorLogger.logCritical(error, message: "Failed to save changes to project '\(project.name)'", category: .database)
+            throw wrappedError
+        }
     }
     
     func validateProjectName(_ name: String) -> ValidationResult {

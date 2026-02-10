@@ -30,6 +30,7 @@ struct ProjectCreationView: View {
                     }
                 }
             }
+            .padding()
             .navigationTitle("New Project")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -42,6 +43,7 @@ struct ProjectCreationView: View {
                     Button("Create") {
                         createProject()
                     }
+                    .buttonStyle(.borderedProminent)
                     .disabled(projectName.isEmpty || domainName.isEmpty || isCreating)
                 }
             }
