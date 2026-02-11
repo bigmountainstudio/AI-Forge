@@ -368,7 +368,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 30: Save Failure Error Handling**
     - **Validates: Requirements 10.6**
 
-- [ ] 12. Checkpoint - Test complete workflow
+- [x] 12. Checkpoint - Test complete workflow
   - Manually test creating a project, adding source files, progressing through steps, ask the user if questions arise.
 
 - [ ] 13. Implement remaining property-based tests
@@ -521,36 +521,36 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Verify file system state
     - _Requirements: 4.2, 4.3, 4.4, 4.5_
 
-  - [ ]* 15.4 Write integration test for configuration management
+  - [x] 15.4 Write integration test for configuration management
     - Test configuration creation, modification, validation, persistence
     - Verify configuration affects script execution
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 16. Polish UI and add final touches
-  - [ ] 16.1 Add keyboard shortcuts
+- [x] 16. Polish UI and add final touches
+  - [x] 16.1 Add keyboard shortcuts
     - Cmd+N for new project
     - Cmd+W to close window
     - Cmd+S to save (if applicable)
     - _Requirements: 13.5_
 
-  - [ ] 16.2 Add accessibility labels
+  - [x] 16.2 Add accessibility labels
     - Add accessibility labels to all interactive elements
     - Test with VoiceOver
     - _Requirements: 13.6_
 
-  - [ ] 16.3 Add loading states and animations
+  - [x] 16.3 Add loading states and animations
     - Add skeleton views for loading states
     - Add smooth transitions between views
     - Add progress animations for long operations
     - _Requirements: 13.6, 15.2_
 
-  - [ ] 16.4 Add empty states
+  - [x] 16.4 Add empty states
     - Add empty state for project list
     - Add empty state for source files
     - Add helpful messages and call-to-action buttons
     - _Requirements: 13.1_
 
-  - [ ] 16.5 Improve error messages
+  - [x] 16.5 Improve error messages
     - Review all error messages for clarity
     - Add suggestions for common errors
     - Add links to documentation where helpful

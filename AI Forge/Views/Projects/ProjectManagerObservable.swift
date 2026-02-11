@@ -19,7 +19,7 @@ final class ProjectManagerObservable {
         self.fileSystemManager = fileSystemManager
     }
     
-    func createProject(name: String, domainName: String, domainDescription: String) async throws -> ProjectModel {
+    func createProject(name: String, customizationDescription: String) async throws -> ProjectModel {
         do {
             // Validate project name
             let validationResult = validateProjectName(name)
@@ -36,13 +36,13 @@ final class ProjectManagerObservable {
                 projectDirectory = try fileSystemManager.createProjectDirectory(projectName: name)
             } catch {
                 let wrappedError = ProjectError.directoryCreationFailed
-                errorMessage = "Failed to create project directory for '\(name)': \(error.localizedDescription)"
+                errorMessage = "Failed to create project directory for '\(name)': \(error.localizedDescription)\n\nSuggestion: \(wrappedError.recoverySuggestion ?? "")"
                 ErrorLogger.logError(error, message: "Failed to create project directory for '\(name)'", category: .fileSystem)
                 throw wrappedError
             }
             
             // Create project model
-            let project = ProjectModel(name: name, domainName: domainName, domainDescription: domainDescription)
+            let project = ProjectModel(name: name, customizationDescription: customizationDescription)
             project.projectDirectoryPath = projectDirectory.path
             
             // Insert into context
@@ -53,7 +53,7 @@ final class ProjectManagerObservable {
                 try modelContext.save()
             } catch {
                 let wrappedError = ProjectError.saveFailed
-                errorMessage = "Failed to save project '\(name)' to database: \(error.localizedDescription)"
+                errorMessage = "Failed to save project '\(name)' to database: \(error.localizedDescription)\n\nSuggestion: \(wrappedError.recoverySuggestion ?? "")"
                 ErrorLogger.logCritical(error, message: "Failed to save project '\(name)' to database", category: .database)
                 throw wrappedError
             }
@@ -210,6 +210,17 @@ enum ProjectError: Error, LocalizedError {
         case .invalidName(let message): return message
         case .directoryCreationFailed: return "Failed to create project directory"
         case .saveFailed: return "Failed to save project"
+        }
+    }
+    
+    var recoverySuggestion: String? {
+        switch self {
+        case .invalidName:
+            return "Use only letters, numbers, spaces, hyphens, and underscores in the project name."
+        case .directoryCreationFailed:
+            return "Check that you have write permissions in the application support directory. Try restarting the application."
+        case .saveFailed:
+            return "Check available disk space and try again. If the problem persists, restart the application."
         }
     }
 }

@@ -23,6 +23,8 @@ struct ConfigurationView: View {
                 Section("Model Configuration") {
                     TextField("Model Name", text: $modelName)
                         .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Model name")
+                        .accessibilityHint("Enter the name of the model to fine-tune")
                     
                     HStack {
                         Text("Learning Rate")
@@ -30,44 +32,72 @@ struct ConfigurationView: View {
                         TextField("0.0001", text: $learningRate)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 120)
+                            .accessibilityLabel("Learning rate")
+                            .accessibilityHint("Enter the learning rate as a decimal number")
                     }
                     
                     Stepper("Batch Size: \(batchSize)", value: $batchSize, in: 1...128)
+                        .accessibilityLabel("Batch size")
+                        .accessibilityValue("\(batchSize)")
+                        .accessibilityHint("Adjust the batch size between 1 and 128")
                     
                     Stepper("Number of Epochs: \(numberOfEpochs)", value: $numberOfEpochs, in: 1...100)
+                        .accessibilityLabel("Number of epochs")
+                        .accessibilityValue("\(numberOfEpochs)")
+                        .accessibilityHint("Adjust the number of training epochs between 1 and 100")
                 }
                 
                 Section("Paths") {
                     HStack {
                         TextField("Output Directory", text: $outputDirectory)
                             .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Output directory")
+                            .accessibilityHint("Path where model checkpoints will be saved")
                         
                         Button {
                             showingOutputPicker = true
                         } label: {
                             Image(systemName: "folder")
                         }
+                        .accessibilityLabel("Choose output directory")
+                        .accessibilityHint("Opens a folder picker")
                     }
                     
                     HStack {
                         TextField("Dataset Path", text: $datasetPath)
                             .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Dataset path")
+                            .accessibilityHint("Path to the training dataset file")
                         
                         Button {
                             showingDatasetPicker = true
                         } label: {
                             Image(systemName: "doc")
                         }
+                        .accessibilityLabel("Choose dataset file")
+                        .accessibilityHint("Opens a file picker")
                     }
                 }
                 
                 if validationErrors.isEmpty == false {
-                    Section("Validation Errors") {
-                        ForEach(validationErrors, id: \.self) { error in
-                            Text(error)
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Validation Errors", systemImage: "exclamationmark.triangle.fill")
+                                .font(.headline)
                                 .foregroundStyle(.red)
+                            
+                            ForEach(validationErrors, id: \.self) { error in
+                                Text("• \(error)")
+                                    .foregroundStyle(.red)
+                                    .font(.caption)
+                            }
+                            
+                            Text("Please correct the errors above before saving.")
                                 .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 4)
                         }
+                        .padding(.vertical, 4)
                     }
                 }
             }
@@ -81,6 +111,8 @@ struct ConfigurationView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(modelName.isEmpty)
+                .accessibilityLabel("Save configuration")
+                .accessibilityHint("Saves the fine-tuning configuration and marks this step as complete")
             }
             .padding()
         }

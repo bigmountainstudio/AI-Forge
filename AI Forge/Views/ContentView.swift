@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var selectedProject: ProjectModel?
     @State private var selectedStep: WorkflowStepModel?
     @State private var workflowEngine: WorkflowEngineObservable?
+    @State private var showingCreateProject = false
     
     var body: some View {
         NavigationSplitView {
@@ -28,10 +29,15 @@ struct ContentView: View {
                         workflowEngine: engine
                     )
                 } else {
-                    ProgressView()
+                    ProgressView("Loading workflow...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else {
-                ContentUnavailableView("Select a Project", systemImage: "folder")
+                ContentUnavailableView {
+                    Label("Select a Project", systemImage: "folder")
+                } description: {
+                    Text("Choose a project from the sidebar to view its workflow steps")
+                }
             }
         } detail: {
             if let step = selectedStep,
@@ -44,7 +50,11 @@ struct ContentView: View {
                 )
                 .id(step.id) // Force refresh when step changes
             } else {
-                ContentUnavailableView("Select a Step", systemImage: "list.bullet")
+                ContentUnavailableView {
+                    Label("Select a Step", systemImage: "list.bullet")
+                } description: {
+                    Text("Choose a workflow step to view details and execute actions")
+                }
             }
         }
         .onAppear {
@@ -62,6 +72,32 @@ struct ContentView: View {
                 }
                 workflowEngine?.loadProject(project)
             }
+        }
+        .sheet(isPresented: $showingCreateProject) {
+            if let manager = projectManager {
+                ProjectCreationView(projectManager: manager)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewProject)) { _ in
+            showingCreateProject = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .saveCurrentProject)) { _ in
+            saveCurrentProject()
+        }
+    }
+    
+    func createNewProject() {
+        showingCreateProject = true
+    }
+    
+    private func saveCurrentProject() {
+        guard let project = selectedProject,
+              let manager = projectManager else { return }
+        
+        do {
+            try manager.saveProject(project)
+        } catch {
+            // Error is already logged in ProjectManagerObservable
         }
     }
     

@@ -17,9 +17,10 @@ struct SourceFilesView: View {
             }
         }
         .padding()
+        .animation(.easeInOut(duration: 0.3), value: observable.sourceFiles.count)
         .fileImporter(
             isPresented: $showingFilePicker,
-            allowedContentTypes: [.text, .plainText, .sourceCode, .data],
+            allowedContentTypes: [.text, .plainText, .sourceCode],
             allowsMultipleSelection: true
         ) { result in
             switch result {
@@ -38,6 +39,7 @@ struct SourceFilesView: View {
             Image(systemName: "doc.badge.plus")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
+                .symbolEffect(.pulse)
             
             Text("No Source Files")
                 .font(.headline)
@@ -53,9 +55,12 @@ struct SourceFilesView: View {
                 Label("Add Files", systemImage: "plus.circle.fill")
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityLabel("Add source files")
+            .accessibilityHint("Opens a file picker to select API documentation and code examples")
         }
         .frame(maxWidth: .infinity)
         .padding()
+        .transition(.opacity.combined(with: .scale))
     }
     
     private var fileListView: some View {
@@ -71,6 +76,8 @@ struct SourceFilesView: View {
                 } label: {
                     Label("Add Files", systemImage: "plus")
                 }
+                .accessibilityLabel("Add more files")
+                .accessibilityHint("Opens a file picker to add additional source files")
             }
             
             List {
@@ -108,6 +115,8 @@ struct SourceFilesView: View {
                                 .foregroundStyle(.red)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Delete \(file.fileName)")
+                        .accessibilityHint("Removes this file from the project")
                     }
                     .contextMenu {
                         Button(role: .destructive) {
@@ -118,9 +127,11 @@ struct SourceFilesView: View {
                             Label("Delete", systemImage: "trash")
                         }
                     }
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
             .frame(minHeight: 200)
+            .animation(.easeInOut(duration: 0.3), value: observable.sourceFiles.count)
         }
     }
     

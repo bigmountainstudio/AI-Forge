@@ -10,7 +10,7 @@ struct ProjectRowView: View {
             Text(project.name)
                 .font(.headline)
             
-            Text(project.domainName)
+            Text(project.customizationDescription)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             
@@ -23,9 +23,15 @@ struct ProjectRowView: View {
                 
                 ProgressView(value: project.viewProgressPercentage)
                     .frame(width: 60)
+                    .accessibilityLabel("Project progress")
+                    .accessibilityValue("\(Int(project.viewProgressPercentage * 100)) percent complete")
+                    .animation(.easeInOut(duration: 0.5), value: project.viewProgressPercentage)
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(project.name), \(project.customizationDescription)")
+        .accessibilityValue("Step \(project.currentStepIndex + 1) of 6, \(Int(project.viewProgressPercentage * 100)) percent complete")
     }
 }
 

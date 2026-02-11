@@ -9,6 +9,9 @@ struct WorkflowStepRowView: View {
         HStack {
             Image(systemName: step.viewStatusIcon)
                 .foregroundStyle(colorForStatus(step.status))
+                .accessibilityLabel(statusAccessibilityLabel(step.status))
+                .animation(.easeInOut(duration: 0.3), value: step.status)
+                .symbolEffect(.bounce, value: step.status == .completed)
             
             VStack(alignment: .leading, spacing: 4) {
                 Label("Step \(step.stepNumber)", systemImage: step.icon)
@@ -34,6 +37,27 @@ struct WorkflowStepRowView: View {
             Spacer()
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Step \(step.stepNumber): \(step.title)")
+        .accessibilityValue(accessibilityValue())
+        .accessibilityHint("Double tap to view step details")
+    }
+    
+    private func statusAccessibilityLabel(_ status: StepStatus) -> String {
+        switch status {
+        case .pending: return "Pending"
+        case .inProgress: return "In progress"
+        case .completed: return "Completed"
+        case .failed: return "Failed"
+        }
+    }
+    
+    private func accessibilityValue() -> String {
+        var value = statusAccessibilityLabel(step.status)
+        if let completedAt = step.completedAt {
+            value += ", completed \(completedAt.formatted(date: .abbreviated, time: .shortened))"
+        }
+        return value
     }
     
     private func colorForStatus(_ status: StepStatus) -> Color {

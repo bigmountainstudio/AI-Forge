@@ -12,16 +12,23 @@ struct ProjectListView: View {
     
     var body: some View {
         Group {
-            if projectManager.projects.isEmpty {
+            if projectManager.isLoading {
+                ProgressView("Loading projects...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if projectManager.projects.isEmpty {
                 ContentUnavailableView {
                     Label("No Projects", systemImage: "folder.badge.plus")
                 } description: {
-                    Text("Create a new project to get started.")
+                    Text("Create a new project to get started with fine-tuning AI models")
                 } actions: {
-                    Button("New Project") {
+                    Button {
                         showingCreateProject = true
+                    } label: {
+                        Label("New Project", systemImage: "plus")
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityLabel("Create first project")
+                    .accessibilityHint("Opens a form to create your first fine-tuning project")
                 }
             } else {
                 List(projectManager.projects, selection: $selectedProject) { project in
@@ -35,7 +42,9 @@ struct ProjectListView: View {
                                 Label("Delete Project", systemImage: "trash")
                             }
                         }
+                        .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
+                .animation(.easeInOut(duration: 0.3), value: projectManager.projects.count)
             }
         }
         .navigationTitle("Projects")
@@ -46,6 +55,8 @@ struct ProjectListView: View {
                 } label: {
                     Label("New Project", systemImage: "plus")
                 }
+                .accessibilityLabel("Create new project")
+                .accessibilityHint("Opens a form to create a new fine-tuning project")
             }
         }
         .sheet(isPresented: $showingCreateProject) {
@@ -70,6 +81,12 @@ struct ProjectListView: View {
         }
         .task {
             await projectManager.loadProjects()
+        }
+        .onDeleteCommand {
+            if let project = selectedProject {
+                projectToDelete = project
+                showingDeleteConfirmation = true
+            }
         }
     }
 }

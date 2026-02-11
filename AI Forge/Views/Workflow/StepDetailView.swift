@@ -48,9 +48,19 @@ struct StepDetailView: View {
                 
                 // Error message
                 if let observable = stepObservable, let error = observable.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .padding()
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Error", systemImage: "exclamationmark.triangle.fill")
+                            .font(.headline)
+                            .foregroundStyle(.red)
+                        
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.body)
+                    }
+                    .padding()
+                    .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
+                    .padding(.horizontal)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
                 
                 // Action buttons
@@ -62,6 +72,9 @@ struct StepDetailView: View {
                                     await observable.executeStep()
                                 }
                             }
+                            .accessibilityLabel("Retry step")
+                            .accessibilityHint("Attempts to execute the failed step again")
+                            .transition(.scale.combined(with: .opacity))
                         }
                         
                         if step.status == .pending || step.status == .failed {
@@ -71,6 +84,9 @@ struct StepDetailView: View {
                                 }
                             }
                             .disabled(observable.isExecuting)
+                            .accessibilityLabel("Execute step")
+                            .accessibilityHint("Runs the Python script for this workflow step")
+                            .opacity(observable.isExecuting ? 0.5 : 1.0)
                         }
                         
                         if observable.isExecuting {
@@ -79,12 +95,19 @@ struct StepDetailView: View {
                                     await observable.cancelExecution()
                                 }
                             }
+                            .accessibilityLabel("Cancel execution")
+                            .accessibilityHint("Stops the currently running script")
+                            .transition(.scale.combined(with: .opacity))
                             
                             ProgressView()
                                 .padding(.leading)
+                                .accessibilityLabel("Executing step")
+                                .transition(.opacity)
                         }
                     }
                     .padding()
+                    .animation(.easeInOut(duration: 0.3), value: observable.isExecuting)
+                    .animation(.easeInOut(duration: 0.3), value: step.status)
                 }
             }
         }

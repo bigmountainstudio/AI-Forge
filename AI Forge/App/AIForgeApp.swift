@@ -14,6 +14,21 @@ struct AIForgeApp: App {
                 .environment(\.appDelegate, appDelegate)
         }
         .modelContainer(for: [ProjectModel.self, WorkflowStepModel.self, FineTuningConfigurationModel.self])
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("New Project") {
+                    NotificationCenter.default.post(name: .createNewProject, object: nil)
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+            
+            CommandGroup(replacing: .saveItem) {
+                Button("Save Project") {
+                    NotificationCenter.default.post(name: .saveCurrentProject, object: nil)
+                }
+                .keyboardShortcut("s", modifiers: .command)
+            }
+        }
     }
 }
 
@@ -57,4 +72,11 @@ extension EnvironmentValues {
         get { self[AppDelegateKey.self] }
         set { self[AppDelegateKey.self] = newValue }
     }
+}
+
+// MARK: - Notification Names for Commands
+
+extension Notification.Name {
+    static let createNewProject = Notification.Name("createNewProject")
+    static let saveCurrentProject = Notification.Name("saveCurrentProject")
 }
