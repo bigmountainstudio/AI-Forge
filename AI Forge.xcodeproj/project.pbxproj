@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		4DD3CB4C2F3C6989005503B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4DB269CB2F3AD360009B7587 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4DB269D22F3AD360009B7587;
+			remoteInfo = "AI Forge";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		4DB269D32F3AD360009B7587 /* AI Forge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AI Forge.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4DD3CB482F3C6989005503B2 /* AI Forge Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "AI Forge Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = "AI Forge";
 			sourceTree = "<group>";
 		};
+		4DD3CB492F3C6989005503B2 /* AI Forge Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "AI Forge Tests";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4DB269D02F3AD360009B7587 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4DD3CB452F3C6989005503B2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				4DB269D52F3AD360009B7587 /* AI Forge */,
+				4DD3CB492F3C6989005503B2 /* AI Forge Tests */,
 				4DB269D42F3AD360009B7587 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				4DB269D32F3AD360009B7587 /* AI Forge.app */,
+				4DD3CB482F3C6989005503B2 /* AI Forge Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = 4DB269D32F3AD360009B7587 /* AI Forge.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4DD3CB472F3C6989005503B2 /* AI Forge Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4DD3CB502F3C6989005503B2 /* Build configuration list for PBXNativeTarget "AI Forge Tests" */;
+			buildPhases = (
+				4DD3CB442F3C6989005503B2 /* Sources */,
+				4DD3CB452F3C6989005503B2 /* Frameworks */,
+				4DD3CB462F3C6989005503B2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4DD3CB4D2F3C6989005503B2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4DD3CB492F3C6989005503B2 /* AI Forge Tests */,
+			);
+			name = "AI Forge Tests";
+			packageProductDependencies = (
+			);
+			productName = "AI Forge Tests";
+			productReference = 4DD3CB482F3C6989005503B2 /* AI Forge Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,10 @@
 				TargetAttributes = {
 					4DB269D22F3AD360009B7587 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					4DD3CB472F3C6989005503B2 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 4DB269D22F3AD360009B7587;
 					};
 				};
 			};
@@ -100,12 +152,20 @@
 			projectRoot = "";
 			targets = (
 				4DB269D22F3AD360009B7587 /* AI Forge */,
+				4DD3CB472F3C6989005503B2 /* AI Forge Tests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4DB269D12F3AD360009B7587 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4DD3CB462F3C6989005503B2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +182,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4DD3CB442F3C6989005503B2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4DD3CB4D2F3C6989005503B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4DB269D22F3AD360009B7587 /* AI Forge */;
+			targetProxy = 4DD3CB4C2F3C6989005503B2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4DB269DE2F3AD361009B7587 /* Debug */ = {
@@ -313,6 +388,46 @@
 			};
 			name = Release;
 		};
+		4DD3CB4E2F3C6989005503B2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L2T9XB5368;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.bigmountainstudio.AI-Forge-Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AI Forge.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AI Forge";
+			};
+			name = Debug;
+		};
+		4DD3CB4F2F3C6989005503B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L2T9XB5368;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.bigmountainstudio.AI-Forge-Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AI Forge.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AI Forge";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -330,6 +445,15 @@
 			buildConfigurations = (
 				4DB269E12F3AD361009B7587 /* Debug */,
 				4DB269E22F3AD361009B7587 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4DD3CB502F3C6989005503B2 /* Build configuration list for PBXNativeTarget "AI Forge Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4DD3CB4E2F3C6989005503B2 /* Debug */,
+				4DD3CB4F2F3C6989005503B2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

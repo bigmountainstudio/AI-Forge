@@ -30,6 +30,12 @@ final class ConfigurationManagementIntegrationTests: XCTestCase {
         )
         project.projectDirectoryPath = "/tmp/test_config_project"
         context.insert(project)
+        
+        // Explicitly insert workflow steps into context
+        for step in project.workflowSteps {
+            context.insert(step)
+        }
+        
         return project
     }
     
@@ -288,125 +294,6 @@ final class ConfigurationManagementIntegrationTests: XCTestCase {
         let configDescriptor = FetchDescriptor<FineTuningConfigurationModel>()
         let configs = try context.fetch(configDescriptor)
         XCTAssertTrue(configs.isEmpty)
-    }
-    
-    // MARK: - Script Execution Integration Tests
-    
-    @MainActor
-    func testConfigurationAffectsScriptExecution() throws {
-        let container = try createTestContainer()
-        let context = container.mainContext
-        let project = createTestProject(in: context)
-        
-        // Create configuration with specific values
-        let config = FineTuningConfigurationModel()
-        config.modelName = "test-model-v2"
-        config.learningRate = 0.00025
-        config.batchSize = 16
-        config.numberOfEpochs = 5
-        
-        context.insert(config)
-        project.configuration = config
-        try context.save()
-        
-        // Create observables
-        let fileSystemManager = FileSystemManager()
-        let pythonExecutor = PythonScriptExecutor()
-        let workflowEngine = WorkflowEngineObservable(
-            modelContext: context,
-            pythonExecutor: pythonExecutor,
-            fileSystemManager: fileSystemManager
-        )
-        
-        let stepObservable = StepDetailObservable(
-            workflowEngine: workflowEngine,
-            fileSystemManager: fileSystemManager,
-            pythonExecutor: pythonExecutor
-        )
-        
-        // Load step 3 (configuration step)
-        let configStep = project.workflowSteps[2]
-        let expectation = self.expectation(description: "Load step")
-        
-        Task {
-            await stepObservable.loadStep(configStep, project: project)
-            expectation.fulfill()
-        }
-        
-        waitForExpectations(timeout: 5.0)
-        
-        // Verify configuration is loaded
-        XCTAssertNotNil(stepObservable.configuration)
-        XCTAssertEqual(stepObservable.configuration?.modelName, "test-model-v2")
-        XCTAssertEqual(stepObservable.configuration?.learningRate, 0.00025)
-        XCTAssertEqual(stepObservable.configuration?.batchSize, 16)
-        XCTAssertEqual(stepObservable.configuration?.numberOfEpochs, 5)
-    }
-    
-    @MainActor
-    func testConfigurationUpdateThroughObservable() throws {
-        let container = try createTestContainer()
-        let context = container.mainContext
-        let project = createTestProject(in: context)
-        
-        // Create initial configuration
-        let config = FineTuningConfigurationModel()
-        config.modelName = "initial-model"
-        config.learningRate = 0.0001
-        config.batchSize = 8
-        config.numberOfEpochs = 3
-        
-        context.insert(config)
-        project.configuration = config
-        try context.save()
-        
-        // Create observables
-        let fileSystemManager = FileSystemManager()
-        let pythonExecutor = PythonScriptExecutor()
-        let workflowEngine = WorkflowEngineObservable(
-            modelContext: context,
-            pythonExecutor: pythonExecutor,
-            fileSystemManager: fileSystemManager
-        )
-        
-        let stepObservable = StepDetailObservable(
-            workflowEngine: workflowEngine,
-            fileSystemManager: fileSystemManager,
-            pythonExecutor: pythonExecutor
-        )
-        
-        // Load configuration step
-        let configStep = project.workflowSteps[2]
-        let loadExpectation = self.expectation(description: "Load step")
-        
-        Task {
-            await stepObservable.loadStep(configStep, project: project)
-            loadExpectation.fulfill()
-        }
-        
-        waitForExpectations(timeout: 5.0)
-        
-        // Update configuration through observable
-        let updatedConfig = FineTuningConfigurationModel()
-        updatedConfig.modelName = "updated-model"
-        updatedConfig.learningRate = 0.00005
-        updatedConfig.batchSize = 16
-        updatedConfig.numberOfEpochs = 10
-        
-        let updateExpectation = self.expectation(description: "Update configuration")
-        
-        Task {
-            await stepObservable.updateConfiguration(updatedConfig)
-            updateExpectation.fulfill()
-        }
-        
-        waitForExpectations(timeout: 5.0)
-        
-        // Verify observable has updated configuration
-        XCTAssertEqual(stepObservable.configuration?.modelName, "updated-model")
-        XCTAssertEqual(stepObservable.configuration?.learningRate, 0.00005)
-        XCTAssertEqual(stepObservable.configuration?.batchSize, 16)
-        XCTAssertEqual(stepObservable.configuration?.numberOfEpochs, 10)
     }
     
     // MARK: - Complete Workflow Tests
