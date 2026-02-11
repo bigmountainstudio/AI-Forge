@@ -368,7 +368,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 30: Save Failure Error Handling**
     - **Validates: Requirements 10.6**
 
-- [-] 12. Checkpoint - Test complete workflow
+- [ ] 12. Checkpoint - Test complete workflow
   - Manually test creating a project, adding source files, progressing through steps, ask the user if questions arise.
 
 - [ ] 13. Implement remaining property-based tests
