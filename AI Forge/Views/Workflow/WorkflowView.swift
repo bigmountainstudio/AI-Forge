@@ -4,48 +4,33 @@ import SwiftUI
 import SwiftData
 
 struct WorkflowView: View {
-    @Environment(\.modelContext) private var modelContext
     let project: ProjectModel
-    
-    @State private var workflowEngine: WorkflowEngineObservable?
-    @State private var selectedStep: WorkflowStepModel?
+    @Binding var selectedStep: WorkflowStepModel?
+    let workflowEngine: WorkflowEngineObservable
     
     var body: some View {
-        NavigationStack {
-            List(project.workflowSteps.sorted(by: { $0.stepNumber < $1.stepNumber }), selection: $selectedStep) { step in
-                NavigationLink(value: step) {
-                    WorkflowStepRowView(step: step)
-                }
-            }
-            .navigationTitle(project.name)
-            .navigationDestination(for: WorkflowStepModel.self) { step in
-                StepDetailView(
-                    step: step,
-                    project: project,
-                    workflowEngine: workflowEngine ?? createWorkflowEngine()
-                )
-            }
+        List(project.workflowSteps.sorted(by: { $0.stepNumber < $1.stepNumber }), selection: $selectedStep) { step in
+            WorkflowStepRowView(step: step)
+                .tag(step)
         }
+        .navigationTitle(project.name)
         .onAppear {
-            if workflowEngine == nil {
-                workflowEngine = createWorkflowEngine()
-                workflowEngine?.loadProject(project)
-            }
+            workflowEngine.loadProject(project)
         }
-    }
-    
-    private func createWorkflowEngine() -> WorkflowEngineObservable {
-        let fileSystemManager = FileSystemManager()
-        let pythonExecutor = PythonScriptExecutor()
-        return WorkflowEngineObservable(
-            modelContext: modelContext,
-            pythonExecutor: pythonExecutor,
-            fileSystemManager: fileSystemManager
-        )
     }
 }
 
 #Preview {
-    WorkflowView(project: ProjectModel.mock)
-        .modelContainer(ProjectModel.preview)
+    NavigationStack {
+        WorkflowView(
+            project: ProjectModel.mock,
+            selectedStep: .constant(nil),
+            workflowEngine: WorkflowEngineObservable(
+                modelContext: ProjectModel.preview.mainContext,
+                pythonExecutor: PythonScriptExecutor(),
+                fileSystemManager: FileSystemManager()
+            )
+        )
+    }
+    .modelContainer(ProjectModel.preview)
 }

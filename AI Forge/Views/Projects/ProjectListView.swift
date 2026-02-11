@@ -11,17 +11,32 @@ struct ProjectListView: View {
     @State private var showingDeleteConfirmation = false
     
     var body: some View {
-        List(projectManager.projects, selection: $selectedProject) { project in
-            ProjectRowView(project: project)
-                .tag(project)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        projectToDelete = project
-                        showingDeleteConfirmation = true
-                    } label: {
-                        Label("Delete Project", systemImage: "trash")
+        Group {
+            if projectManager.projects.isEmpty {
+                ContentUnavailableView {
+                    Label("No Projects", systemImage: "folder.badge.plus")
+                } description: {
+                    Text("Create a new project to get started.")
+                } actions: {
+                    Button("New Project") {
+                        showingCreateProject = true
                     }
+                    .buttonStyle(.borderedProminent)
                 }
+            } else {
+                List(projectManager.projects, selection: $selectedProject) { project in
+                    ProjectRowView(project: project)
+                        .tag(project)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                projectToDelete = project
+                                showingDeleteConfirmation = true
+                            } label: {
+                                Label("Delete Project", systemImage: "trash")
+                            }
+                        }
+                }
+            }
         }
         .navigationTitle("Projects")
         .toolbar {

@@ -8,6 +8,8 @@ struct ContentView: View {
     @Environment(\.appDelegate) private var appDelegate
     @State private var projectManager: ProjectManagerObservable?
     @State private var selectedProject: ProjectModel?
+    @State private var selectedStep: WorkflowStepModel?
+    @State private var workflowEngine: WorkflowEngineObservable?
     
     var body: some View {
         NavigationSplitView {
@@ -17,12 +19,32 @@ struct ContentView: View {
                     selectedProject: $selectedProject
                 )
             }
-        } detail: {
+        } content: {
             if let project = selectedProject {
-                WorkflowView(project: project)
+                if let engine = workflowEngine {
+                    WorkflowView(
+                        project: project,
+                        selectedStep: $selectedStep,
+                        workflowEngine: engine
+                    )
+                } else {
+                    ProgressView()
+                }
             } else {
-                Text("Select a project to begin")
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView("Select a Project", systemImage: "folder")
+            }
+        } detail: {
+            if let step = selectedStep,
+               let project = selectedProject,
+               let engine = workflowEngine {
+                StepDetailView(
+                    step: step,
+                    project: project,
+                    workflowEngine: engine
+                )
+                .id(step.id) // Force refresh when step changes
+            } else {
+                ContentUnavailableView("Select a Step", systemImage: "list.bullet")
             }
         }
         .onAppear {
@@ -32,15 +54,39 @@ struct ContentView: View {
                 appDelegate?.modelContext = modelContext
             }
         }
+        .onChange(of: selectedProject) { _, newProject in
+            selectedStep = nil
+            if let project = newProject {
+                if workflowEngine == nil {
+                    workflowEngine = createWorkflowEngine()
+                }
+                workflowEngine?.loadProject(project)
+            }
+        }
     }
     
     private func createProjectManager() -> ProjectManagerObservable {
         let fileSystemManager = FileSystemManager()
         return ProjectManagerObservable(modelContext: modelContext, fileSystemManager: fileSystemManager)
     }
+    
+    private func createWorkflowEngine() -> WorkflowEngineObservable {
+        let fileSystemManager = FileSystemManager()
+        let pythonExecutor = PythonScriptExecutor()
+        return WorkflowEngineObservable(
+            modelContext: modelContext,
+            pythonExecutor: pythonExecutor,
+            fileSystemManager: fileSystemManager
+        )
+    }
 }
 
-#Preview {
+#Preview("With Project") {
     ContentView()
         .modelContainer(ProjectModel.preview)
+}
+
+#Preview("No Project") {
+    ContentView()
+        .modelContainer(ProjectModel.emptyPreview)
 }

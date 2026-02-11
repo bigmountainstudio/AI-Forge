@@ -58,11 +58,21 @@ extension ProjectModel {
     @MainActor
     static var preview: ModelContainer {
         let container = try! ModelContainer(
-            for: ProjectModel.self,
+            for: ProjectModel.self, WorkflowStepModel.self, FineTuningConfigurationModel.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         
         container.mainContext.insert(mock)
+        
+        return container
+    }
+    
+    @MainActor
+    static var emptyPreview: ModelContainer {
+        let container = try! ModelContainer(
+            for: ProjectModel.self, WorkflowStepModel.self, FineTuningConfigurationModel.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
         
         return container
     }
