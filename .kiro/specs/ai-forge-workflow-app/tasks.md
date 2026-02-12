@@ -6,30 +6,41 @@ This implementation plan breaks down the AI Forge Workflow Application into disc
 
 Each task builds incrementally on previous work, with property-based tests integrated close to implementation to catch errors early. Tasks marked with `*` are optional and can be skipped for faster MVP delivery.
 
+**Implementation Language**: Swift with SwiftUI (macOS 14.0+)
+
+**Key Technologies**:
+- SwiftUI for UI with `@Observable` macro for state management
+- SwiftData with `@Model` macro for persistence
+- Foundation Process API for Python script execution
+- FileManager for file system operations
+- Swift async/await for concurrency
+
 ## Tasks
 
-- [x] 1. Set up project structure and core infrastructure
+- [ ] 1. Set up project structure and core infrastructure
   - Create Xcode project for macOS SwiftUI application (minimum macOS 14.0)
-  - Set up folder structure: App/, Views/, Shared/ (Models, Services, Extensions, Tools), Resources/, Supporting Files/
-  - Configure SwiftData model container in app entry point
+  - Set up folder structure: App/, Views/ (Projects, Workflow, Configuration), Shared/ (Models, Services, Extensions, Tools), Resources/, Supporting Files/
+  - Configure SwiftData model container in app entry point with ProjectModel, WorkflowStepModel, FineTuningConfigurationModel
   - Add file header template to all new files: `// Copyright ©2026 Big Mountain Studio. All rights reserved. X: @BigMtnStudio`
+  - Create .gitignore and README.md
   - _Requirements: All requirements (foundation)_
 
-- [x] 2. Implement data models (SwiftData layer)
-  - [x] 2.1 Create StepStatus enum and WorkflowStepModel
+- [ ] 2. Implement data models (SwiftData layer)
+  - [ ] 2.1 Create StepStatus enum and WorkflowStepModel
     - Define `StepStatus` enum with cases: pending, inProgress, completed, failed
     - Create `WorkflowStepModel` with @Model macro
     - Add properties: id, stepNumber, title, stepDescription, status, completedAt, errorMessage
     - Implement `createDefaultSteps()` static method to generate six workflow steps
     - Add computed properties: `viewStatusIcon`, `viewStatusColor`
     - Add preview helpers: `mock` static property
-    - _Requirements: 3.1, 3.3_
+    - _Requirements: 3.1, 3.3, 15.6_
 
-  - [ ]* 2.2 Write property test for WorkflowStepModel
+  - [ ]* 2.2 Write property test for WorkflowStepModel state preservation
     - **Property 13: Step State Preservation During Navigation**
     - **Validates: Requirements 3.6**
+    - Test that navigating away and returning preserves step status and data
 
-  - [x] 2.3 Create FineTuningConfigurationModel
+  - [ ] 2.3 Create FineTuningConfigurationModel
     - Create `FineTuningConfigurationModel` with @Model macro
     - Add properties: id, modelName, learningRate, batchSize, numberOfEpochs, outputDirectory, datasetPath, additionalParameters
     - Implement validation methods: `isValid`, `validate()`
@@ -40,29 +51,33 @@ Each task builds incrementally on previous work, with property-based tests integ
   - [ ]* 2.4 Write property test for configuration validation
     - **Property 23: Configuration Value Validation**
     - **Validates: Requirements 6.3**
+    - Test that out-of-range values (negative learning rate, zero batch size, etc.) are rejected
 
   - [ ]* 2.5 Write property test for configuration persistence
     - **Property 24: Configuration Persistence Round-Trip**
     - **Validates: Requirements 6.4, 6.5**
+    - Test that saving and loading configuration preserves all values exactly
 
-  - [x] 2.6 Create ProjectModel
+  - [ ] 2.6 Create ProjectModel
     - Create `ProjectModel` with @Model macro
     - Add properties: id (unique), name, domainName, domainDescription, createdAt, updatedAt, currentStepIndex, projectDirectoryPath
     - Add relationships: workflowSteps (one-to-many, cascade delete), configuration (one-to-one, cascade delete)
     - Initialize with default workflow steps in init
     - Add computed properties: `viewCurrentStepTitle`, `viewProgressPercentage`
     - Add preview helpers: `mock`, `mocks`, `preview` (ModelContainer)
-    - _Requirements: 1.1, 2.2, 3.1_
+    - _Requirements: 1.1, 2.2, 3.1, 15.4_
 
   - [ ]* 2.7 Write property test for project initialization
     - **Property 1: Project Creation Initializes State**
     - **Validates: Requirements 1.1**
+    - Test that new projects have unique IDs, correct timestamps, step index at 0, and all six workflow steps
 
   - [ ]* 2.8 Write property test for domain information persistence
     - **Property 8: Domain Information Persistence**
     - **Validates: Requirements 2.2**
+    - Test that domain name and description are preserved exactly through save/load cycle
 
-  - [x] 2.9 Create SourceFileReference struct
+  - [ ] 2.9 Create SourceFileReference struct
     - Create `SourceFileReference` struct (Codable, Identifiable)
     - Add properties: id, fileName, filePath, fileSize, category, addedAt
     - Define `SourceFileCategory` enum: apiDocumentation, codeExamples
@@ -70,11 +85,13 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add preview helpers: `mock`, `mocks`
     - _Requirements: 4.1, 4.4_
 
-- [x] 3. Checkpoint - Ensure data models compile
-  - Ensure all data models compile without errors, ask the user if questions arise.
+- [ ] 3. Checkpoint - Ensure data models compile and preview
+  - Ensure all data models compile without errors
+  - Verify preview helpers work correctly
+  - Ask the user if questions arise
 
-- [x] 4. Implement service layer (Business logic)
-  - [x] 4.1 Create FileSystemManager
+- [ ] 4. Implement service layer (Business logic)
+  - [ ] 4.1 Create FileSystemManager
     - Create `FileSystemManager` class with FileManager instance
     - Initialize with base projects directory in Application Support
     - Implement `createProjectDirectory(projectName:)` - creates root and subdirectories
@@ -85,23 +102,34 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Implement `validateFilePath(_:)` - checks file existence
     - Implement `deleteProjectDirectory(at:)` - removes entire project directory
     - Implement `getProjectDirectory(projectName:)` - returns project URL
-    - _Requirements: 4.2, 4.3, 4.4, 4.5, 11.1, 11.2, 11.3_
+    - _Requirements: 4.2, 4.3, 4.4, 4.5, 11.1, 11.2, 11.3, 11.4, 11.6_
 
   - [ ]* 4.2 Write property test for directory structure creation
     - **Property 3: Project Directory Structure Creation**
     - **Validates: Requirements 1.3, 11.1, 11.2**
+    - Test that all required subdirectories are created with correct paths
 
   - [ ]* 4.3 Write property test for source file operations
     - **Property 14: Source File Addition**
     - **Property 15: Source File Validation**
+    - **Property 16: Source File List Accuracy**
     - **Property 17: Source File Removal**
-    - **Validates: Requirements 4.2, 4.3, 4.5**
+    - **Validates: Requirements 4.2, 4.3, 4.4, 4.5**
+    - Test file addition, validation, listing, and removal operations
 
-  - [ ]* 4.4 Write property test for file placement
+  - [ ]* 4.4 Write property test for file placement and paths
     - **Property 31: File Placement in Correct Subdirectories**
-    - **Validates: Requirements 11.3**
+    - **Property 32: Absolute Path Resolution**
+    - **Property 34: macOS Path Validation**
+    - **Validates: Requirements 11.3, 11.4, 11.6**
+    - Test that files are placed in correct subdirectories and paths are valid
 
-  - [x] 4.5 Create PythonScriptExecutor actor
+  - [ ]* 4.5 Write property test for project directory cleanup
+    - **Property 33: Project Directory Cleanup on Deletion**
+    - **Validates: Requirements 11.5**
+    - Test that deleting a project removes all associated directories and files
+
+  - [ ] 4.6 Create PythonScriptExecutor actor
     - Create `PythonScriptExecutor` actor for thread-safe script execution
     - Add property: `currentProcess` (optional Process)
     - Implement `executeScript(scriptPath:arguments:workingDirectory:outputHandler:)` async method
@@ -115,24 +143,30 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Define `ScriptExecutionResult` struct
     - _Requirements: 5.1, 7.1, 7.3, 8.1, 9.1, 12.1, 12.2, 12.3, 12.4, 12.6_
 
-  - [ ]* 4.6 Write property test for script execution
+  - [ ]* 4.7 Write property test for script execution
     - **Property 19: Python Script Execution with Parameters**
+    - **Property 20: Script Success Marks Step Complete**
+    - **Property 21: Script Failure Marks Step Failed**
     - **Property 36: Script Argument Passing**
     - **Property 37: Output Stream Capture**
     - **Property 38: Exit Code Handling**
     - **Property 40: Working Directory Configuration**
-    - **Validates: Requirements 5.1, 7.1, 8.1, 9.1, 12.2, 12.3, 12.4, 12.6**
+    - **Validates: Requirements 5.1, 5.3, 5.4, 7.1, 7.4, 7.5, 8.1, 8.3, 8.4, 9.1, 9.3, 9.4, 12.2, 12.3, 12.4, 12.6**
+    - Test script execution with various parameters, success/failure cases, and output capture
 
-  - [ ]* 4.7 Write unit test for Python installation verification
-    - Test `verifyPythonInstallation()` with mock process
-    - Test error handling when Python is not found
-    - _Requirements: 12.1_
+  - [ ]* 4.8 Write property test for Python verification and error handling
+    - **Property 35: Python Installation Verification**
+    - **Property 39: Missing Script Error Handling**
+    - **Validates: Requirements 12.1, 12.5**
+    - Test Python installation verification and error handling for missing scripts
 
-- [x] 5. Checkpoint - Ensure service layer compiles
-  - Ensure all service classes compile without errors, ask the user if questions arise.
+- [ ] 5. Checkpoint - Ensure service layer compiles
+  - Ensure all service classes compile without errors
+  - Verify FileSystemManager creates correct directory structure
+  - Ask the user if questions arise
 
-- [x] 6. Implement observable classes (State management)
-  - [x] 6.1 Create ProjectManagerObservable
+- [ ] 6. Implement observable classes (State management)
+  - [ ] 6.1 Create ProjectManagerObservable
     - Create `ProjectManagerObservable` class with @Observable macro
     - Add properties: modelContext, fileSystemManager, projects array, selectedProject, isLoading, errorMessage
     - Implement `createProject(name:domainName:domainDescription:)` async method
@@ -149,14 +183,17 @@ Each task builds incrementally on previous work, with property-based tests integ
   - [ ]* 6.2 Write property test for project name validation
     - **Property 2: Project Name Validation Rejects Invalid Characters**
     - **Validates: Requirements 1.2**
+    - Test that invalid characters (/, \, :, *, ?, ", <, >, |) and empty strings are rejected
 
   - [ ]* 6.3 Write property test for project CRUD operations
     - **Property 4: Project List Completeness**
+    - **Property 5: Project Selection Loads State**
     - **Property 6: Project Persistence Round-Trip**
     - **Property 7: Project Deletion Removes from List**
-    - **Validates: Requirements 1.4, 1.6, 1.7, 10.4, 10.5**
+    - **Validates: Requirements 1.4, 1.5, 1.6, 1.7, 10.4, 10.5**
+    - Test project creation, loading, persistence, and deletion
 
-  - [x] 6.4 Create WorkflowEngineObservable
+  - [ ] 6.4 Create WorkflowEngineObservable
     - Create `WorkflowEngineObservable` class with @Observable macro
     - Add properties: modelContext, pythonExecutor, fileSystemManager, currentProject, currentStep, isExecutingStep, executionOutput
     - Implement `loadProject(_:)` method to set current project and step
@@ -172,13 +209,16 @@ Each task builds incrementally on previous work, with property-based tests integ
     - **Property 11: Step Completion Enables Next Step**
     - **Property 12: Prerequisite Enforcement**
     - **Validates: Requirements 3.4, 3.5**
+    - Test that steps can only progress when prerequisites are met
 
-  - [x] 6.6 Create StepDetailObservable
+  - [ ] 6.6 Create StepDetailObservable
     - Create `StepDetailObservable` class with @Observable macro
     - Add properties: workflowEngine, fileSystemManager, pythonExecutor, currentStep, currentProject, sourceFiles, configuration, executionOutput, isExecuting, errorMessage
     - Implement `loadStep(_:project:)` async method
     - Load step-specific data based on step number (source files for step 1, configuration for step 3)
-    - Implement `addSourceFiles(_:)` async method using FileSystemManager
+    - Implement `addSourceFiles(_:category:)` async method using FileSystemManager
+    - Accept array of URLs and a SourceFileCategory parameter
+    - Add all files with the specified category (either .apiDocumentation or .codeExamples)
     - Implement `removeSourceFile(_:)` async method
     - Implement `updateConfiguration(_:)` async method
     - Implement `executeStep()` async method
@@ -194,21 +234,31 @@ Each task builds incrementally on previous work, with property-based tests integ
   - [ ]* 6.7 Write property test for step execution
     - **Property 20: Script Success Marks Step Complete**
     - **Property 21: Script Failure Marks Step Failed**
+    - **Property 22: Output File Validation After Generation**
+    - **Property 25: Configuration Save Completes Step**
     - **Property 26: Process Cancellation**
-    - **Validates: Requirements 5.3, 5.4, 7.3, 7.4, 7.5, 8.3, 8.4, 9.3, 9.4**
+    - **Validates: Requirements 5.3, 5.4, 5.5, 6.6, 7.3, 7.4, 7.5, 7.6, 8.3, 8.4, 9.3, 9.4**
+    - Test step execution, success/failure marking, and process cancellation
 
-- [x] 7. Checkpoint - Ensure observable classes compile
-  - Ensure all observable classes compile without errors, ask the user if questions arise.
+  - [ ]* 6.8 Write property test for source file prerequisites
+    - **Property 18: Source File Prerequisite Validation**
+    - **Validates: Requirements 4.6**
+    - Test that Prepare Source Files step requires at least one source file
 
-- [x] 8. Implement presentation layer (SwiftUI views)
-  - [x] 8.1 Create AIForgeApp entry point
+- [ ] 7. Checkpoint - Ensure observable classes compile
+  - Ensure all observable classes compile without errors
+  - Verify state management works correctly
+  - Ask the user if questions arise
+
+- [ ] 8. Implement presentation layer (SwiftUI views)
+  - [ ] 8.1 Create AIForgeApp entry point
     - Create `AIForgeApp` struct with @main attribute
     - Define WindowGroup scene with ContentView
     - Configure modelContainer for ProjectModel, WorkflowStepModel, FineTuningConfigurationModel
     - Add file header
     - _Requirements: All (foundation)_
 
-  - [x] 8.2 Create ContentView (main layout)
+  - [ ] 8.2 Create ContentView (main layout)
     - Create `ContentView` with NavigationSplitView
     - Add @Environment(\.modelContext) property
     - Add @State properties: projectManager, selectedProject
@@ -218,7 +268,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview with ProjectModel.preview
     - _Requirements: 13.1, 13.2_
 
-  - [x] 8.3 Create ProjectListView
+  - [ ] 8.3 Create ProjectListView
     - Create `ProjectListView` with List of projects
     - Add @Bindable projectManager and @Binding selectedProject
     - Add @State showingCreateProject for sheet presentation
@@ -227,9 +277,9 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Present ProjectCreationView sheet
     - Call `projectManager.loadProjects()` in .task modifier
     - Add #Preview
-    - _Requirements: 1.4, 1.5, 13.1_
+    - _Requirements: 1.4, 1.5, 13.1, 15.4_
 
-  - [x] 8.4 Create ProjectRowView
+  - [ ] 8.4 Create ProjectRowView
     - Create `ProjectRowView` displaying project information
     - Show project name (headline), domain name (subheadline)
     - Show current step progress: "Step X of 6"
@@ -237,7 +287,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add vertical padding
     - _Requirements: 15.4_
 
-  - [x] 8.5 Create ProjectCreationView
+  - [ ] 8.5 Create ProjectCreationView
     - Create `ProjectCreationView` with Form
     - Add @Environment(\.dismiss) and @Bindable projectManager
     - Add @State properties: projectName, domainName, domainDescription, isCreating, errorMessage
@@ -249,7 +299,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 1.1, 1.2, 2.1, 2.2_
 
-  - [x] 8.6 Create WorkflowView
+  - [ ] 8.6 Create WorkflowView
     - Create `WorkflowView` with NavigationStack
     - Add project parameter and @State properties: workflowEngine, selectedStep
     - Display List of workflow steps with NavigationLink
@@ -260,7 +310,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 3.1, 13.2, 13.3_
 
-  - [x] 8.7 Create WorkflowStepRowView
+  - [ ] 8.7 Create WorkflowStepRowView
     - Create `WorkflowStepRowView` displaying step information
     - Show status icon using `step.viewStatusIcon` with color
     - Show step title (headline) and description (subheadline)
@@ -269,7 +319,7 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add vertical padding
     - _Requirements: 3.3, 15.6_
 
-  - [x] 8.8 Create StepDetailView
+  - [ ] 8.8 Create StepDetailView
     - Create `StepDetailView` with ScrollView
     - Add parameters: step, project, workflowEngine
     - Add @State stepObservable property
@@ -284,16 +334,19 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Add #Preview
     - _Requirements: 3.3, 5.2, 7.2, 8.2, 9.2, 13.3_
 
-  - [x] 8.9 Create SourceFilesView (step 1 content)
+  - [ ] 8.9 Create SourceFilesView (step 1 content)
     - Create `SourceFilesView` displaying source file list
     - Add observable parameter (StepDetailObservable)
     - Display List of source files with file name, size, category
-    - Add toolbar button to add files using file picker
+    - Add separate toolbar buttons for adding files:
+      - "Add API Documentation" button - opens file picker and adds files with `.apiDocumentation` category
+      - "Add Code Examples" button - opens file picker and adds files with `.codeExamples` category
+    - Each button should allow multi-file selection and add all selected files with the correct category
     - Add swipe-to-delete for removing files
     - Show empty state when no files
     - _Requirements: 4.1, 4.4, 4.5_
 
-  - [x] 8.10 Create ConfigurationView (step 3 content)
+  - [ ] 8.10 Create ConfigurationView (step 3 content)
     - Create `ConfigurationView` with Form
     - Add observable parameter (StepDetailObservable)
     - Display TextField for model name
@@ -306,11 +359,13 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Show validation errors inline
     - _Requirements: 6.1, 6.2, 6.3_
 
-- [x] 9. Checkpoint - Ensure UI compiles and runs
-  - Build and run the application, verify basic navigation works, ask the user if questions arise.
+- [ ] 9. Checkpoint - Ensure UI compiles and runs
+  - Build and run the application
+  - Verify basic navigation works (project list, workflow view, step detail)
+  - Ask the user if questions arise
 
-- [x] 10. Implement error handling and validation
-  - [x] 10.1 Create ValidationHelpers utility
+- [ ] 10. Implement error handling and validation
+  - [ ] 10.1 Create ValidationHelpers utility
     - Create `ValidationHelpers` class with static validation methods
     - Implement `isValidProjectName(_:)` checking for empty and invalid characters
     - Implement `isValidFilePath(_:)` checking path validity
@@ -319,19 +374,19 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Implement `isValidEpochs(_:)` checking positive integer
     - _Requirements: 1.2, 6.3, 14.4_
 
-  - [x] 10.2 Add error handling to ProjectManagerObservable
+  - [ ] 10.2 Add error handling to ProjectManagerObservable
     - Wrap all operations in do-catch blocks
     - Set errorMessage property on failures
     - Provide specific error messages with context
     - _Requirements: 14.1, 14.3_
 
-  - [x] 10.3 Add error handling to StepDetailObservable
+  - [ ] 10.3 Add error handling to StepDetailObservable
     - Wrap script execution in do-catch blocks
     - Display stderr output on script failures
     - Provide actionable error messages
     - _Requirements: 14.2, 14.6_
 
-  - [x] 10.4 Add error logging infrastructure
+  - [ ] 10.4 Add error logging infrastructure
     - Create log directory: ~/Library/Logs/AIForge/
     - Implement logging function with timestamp, category, severity
     - Log all critical errors with stack traces
@@ -343,19 +398,19 @@ Each task builds incrementally on previous work, with property-based tests integ
     - Test error recovery mechanisms
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
-- [x] 11. Implement state persistence and auto-save
-  - [x] 11.1 Add auto-save to WorkflowEngineObservable
+- [ ] 11. Implement state persistence and auto-save
+  - [ ] 11.1 Add auto-save to WorkflowEngineObservable
     - Call modelContext.save() after marking step complete
     - Call modelContext.save() after step failure
     - Add error handling for save failures
     - _Requirements: 10.1_
 
-  - [x] 11.2 Add auto-save to ProjectManagerObservable
+  - [ ] 11.2 Add auto-save to ProjectManagerObservable
     - Implement debounced save on configuration changes
     - Save project state on step progression
     - _Requirements: 10.2_
 
-  - [x] 11.3 Add application shutdown handling
+  - [ ] 11.3 Add application shutdown handling
     - Implement applicationWillTerminate handler
     - Ensure all pending saves complete before exit
     - _Requirements: 10.3_
@@ -363,13 +418,19 @@ Each task builds incrementally on previous work, with property-based tests integ
   - [ ]* 11.4 Write property test for auto-save
     - **Property 28: Automatic State Persistence on Step Completion**
     - **Validates: Requirements 10.1**
+    - Test that project state is saved automatically when steps complete
 
   - [ ]* 11.5 Write property test for save failure handling
     - **Property 30: Save Failure Error Handling**
     - **Validates: Requirements 10.6**
+    - Test that save failures are handled gracefully with user notification
 
-- [x] 12. Checkpoint - Test complete workflow
-  - Manually test creating a project, adding source files, progressing through steps, ask the user if questions arise.
+- [ ] 12. Checkpoint - Test complete workflow
+  - Manually test creating a project
+  - Add source files to step 1
+  - Progress through workflow steps
+  - Verify state persistence by closing and reopening app
+  - Ask the user if questions arise
 
 - [ ] 13. Implement remaining property-based tests
   - [ ]* 13.1 Write property test for project selection
