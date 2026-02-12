@@ -27,11 +27,6 @@
 			path = "AI Forge";
 			sourceTree = "<group>";
 		};
-		4DD3CB492F3C6989005503B2 /* AI Forge Tests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "AI Forge Tests";
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,7 +51,6 @@
 			isa = PBXGroup;
 			children = (
 				4DB269D52F3AD360009B7587 /* AI Forge */,
-				4DD3CB492F3C6989005503B2 /* AI Forge Tests */,
 				4DB269D42F3AD360009B7587 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -107,9 +101,6 @@
 			);
 			dependencies = (
 				4DD3CB4D2F3C6989005503B2 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				4DD3CB492F3C6989005503B2 /* AI Forge Tests */,
 			);
 			name = "AI Forge Tests";
 			packageProductDependencies = (

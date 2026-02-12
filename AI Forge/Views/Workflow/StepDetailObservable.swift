@@ -194,6 +194,17 @@ final class StepDetailObservable {
             return
         }
         
+        // Requirement 6.1, 6.2: Validate step completion before execution
+        // For step 1 (Prepare Source Files), validate that files exist
+        if step.stepNumber == 1 {
+            let (isValid, validationError) = validateStepCompletion()
+            if isValid == false {
+                errorMessage = validationError
+                ErrorLogger.log("Step completion validation failed: \(validationError ?? "Unknown error")", severity: .warning, category: .workflow)
+                return
+            }
+        }
+        
         isExecuting = true
         executionOutput = ""
         errorMessage = nil
@@ -207,9 +218,12 @@ final class StepDetailObservable {
             
             if result.success {
                 do {
+                    // Requirement 6.5: Record which categories contain files
+                    let categoriesWithFiles = getCategoriesWithFiles()
+                    
                     try workflowEngine.markStepComplete(step)
                     errorMessage = nil
-                    ErrorLogger.log("Successfully completed step '\(step.title)' for project '\(project.name)'", severity: .info, category: .workflow)
+                    ErrorLogger.log("Successfully completed step '\(step.title)' for project '\(project.name)'. Categories with files: \(categoriesWithFiles.map { $0.rawValue }.joined(separator: ", "))", severity: .info, category: .workflow)
                 } catch {
                     errorMessage = "Step completed but failed to save state: \(error.localizedDescription)"
                     ErrorLogger.logError(error, message: "Failed to save completion state for step '\(step.title)'", category: .database)
@@ -245,6 +259,50 @@ final class StepDetailObservable {
     func cancelExecution() async {
         await pythonExecutor.cancelExecution()
         isExecuting = false
+    }
+    
+    // MARK: - Step Completion Validation
+    
+    /// Validates that the Prepare Source Files step can be completed
+    /// Requirements: 6.1, 6.2, 6.3, 6.4, 6.5
+    func validateStepCompletion() -> (isValid: Bool, errorMessage: String?) {
+        // Requirement 6.1: Verify at least one file exists before allowing step completion
+        let totalFiles = sourceFiles.count
+        
+        if totalFiles == 0 {
+            // Requirement 6.2: Display validation error if no files exist
+            return (isValid: false, errorMessage: "At least one source file is required. Please add API documentation files or code examples to proceed.")
+        }
+        
+        // Requirement 6.3: Allow completion with files in only one category
+        let apiDocCount = sourceFiles.filter { $0.category == .apiDocumentation }.count
+        let codeExampleCount = sourceFiles.filter { $0.category == .codeExamples }.count
+        
+        // Requirement 6.4: When files exist in both categories, mark step as ready for completion
+        // (This is implicitly handled by the fact that we allow completion with files in one or both categories)
+        
+        return (isValid: true, errorMessage: nil)
+    }
+    
+    /// Gets the categories that contain files
+    /// Requirement 6.5: Record which categories contain files
+    func getCategoriesWithFiles() -> [SourceFileCategory] {
+        var categories: [SourceFileCategory] = []
+        
+        if sourceFiles.contains(where: { $0.category == .apiDocumentation }) {
+            categories.append(.apiDocumentation)
+        }
+        
+        if sourceFiles.contains(where: { $0.category == .codeExamples }) {
+            categories.append(.codeExamples)
+        }
+        
+        return categories
+    }
+    
+    /// Checks if a specific category has files
+    func hasCategoryFiles(_ category: SourceFileCategory) -> Bool {
+        return sourceFiles.contains { $0.category == category }
     }
     
     private func loadSourceFiles() async {
