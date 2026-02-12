@@ -6,11 +6,15 @@ import UniformTypeIdentifiers
 
 struct SourceFilesView: View {
     @Bindable var observable: StepDetailObservable
-    @State private var showingAPIDocumentationPicker = false
-    @State private var showingCodeExamplesPicker = false
+    @State private var showingFilePicker = false
+    @State private var selectedPickerCategory: SourceFileCategory?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if let errorMessage = observable.errorMessage {
+                errorBannerView(message: errorMessage)
+            }
+            
             helpSection
             
             if observable.sourceFiles.isEmpty {
@@ -22,18 +26,48 @@ struct SourceFilesView: View {
         .padding()
         .animation(.easeInOut(duration: 0.3), value: observable.sourceFiles.count)
         .fileImporter(
-            isPresented: $showingAPIDocumentationPicker,
+            isPresented: $showingFilePicker,
             allowedContentTypes: [.folder, .sourceCode, .plainText],
             allowsMultipleSelection: true
         ) { result in
-            handleFileSelection(result, category: .apiDocumentation)
+            if let category = selectedPickerCategory {
+                handleFileSelection(result, category: category)
+            }
         }
-        .fileImporter(
-            isPresented: $showingCodeExamplesPicker,
-            allowedContentTypes: [.folder, .sourceCode, .plainText],
-            allowsMultipleSelection: true
-        ) { result in
-            handleFileSelection(result, category: .codeExamples)
+    }
+    
+    private func errorBannerView(message: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.red)
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Error Adding Files")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(nil)
+                }
+                
+                Spacer()
+                
+                Button {
+                    observable.errorMessage = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss error")
+            }
+            .padding(12)
+            .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
+            .border(.red.opacity(0.3), width: 1)
         }
     }
     
@@ -55,6 +89,17 @@ struct SourceFilesView: View {
                     Text("Swift interface files with API definitions")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        
+                        Text("../api_training_data/")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .help("API documentation files are stored in the api_training_data directory, which is used by the dataset generation scripts to create training data from API definitions.")
+                    }
                 }
                 
                 Divider()
@@ -67,6 +112,17 @@ struct SourceFilesView: View {
                     Text("Complete working SwiftUI examples")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        
+                        Text("code_examples/")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .help("Code example files are stored in the code_examples directory, which is used by the dataset generation scripts to create training data from working examples.")
+                    }
                 }
             }
             .padding(8)
@@ -91,7 +147,8 @@ struct SourceFilesView: View {
             
             HStack(spacing: 12) {
                 Button {
-                    showingAPIDocumentationPicker = true
+                    selectedPickerCategory = .apiDocumentation
+                    showingFilePicker = true
                 } label: {
                     Label("Add API Docs", systemImage: "doc.text.plus")
                 }
@@ -100,7 +157,8 @@ struct SourceFilesView: View {
                 .accessibilityHint("Opens a file picker to select API documentation files or folders")
                 
                 Button {
-                    showingCodeExamplesPicker = true
+                    selectedPickerCategory = .codeExamples
+                    showingFilePicker = true
                 } label: {
                     Label("Add Examples", systemImage: "chevron.left.forwardslash.chevron.right")
                 }
@@ -129,7 +187,8 @@ struct SourceFilesView: View {
             
             HStack(spacing: 12) {
                 Button {
-                    showingAPIDocumentationPicker = true
+                    selectedPickerCategory = .apiDocumentation
+                    showingFilePicker = true
                 } label: {
                     Label("Add API Docs", systemImage: "plus")
                 }
@@ -137,7 +196,8 @@ struct SourceFilesView: View {
                 .accessibilityLabel("Add more API documentation")
                 
                 Button {
-                    showingCodeExamplesPicker = true
+                    selectedPickerCategory = .codeExamples
+                    showingFilePicker = true
                 } label: {
                     Label("Add Examples", systemImage: "plus")
                 }
@@ -162,6 +222,22 @@ struct SourceFilesView: View {
                     .foregroundStyle(.secondary)
             }
             
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Image(systemName: "folder.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(directoryPath(for: files.first?.category ?? .apiDocumentation))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .help(directoryPathTooltip(for: files.first?.category ?? .apiDocumentation))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.regularMaterial, in: .rect(cornerRadius: 6))
+            }
+            
             List {
                 ForEach(files) { file in
                     HStack {
@@ -183,6 +259,7 @@ struct SourceFilesView: View {
                                 Text(directoryPath(for: file.category))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                    .help(directoryPathTooltip(for: file.category))
                             }
                         }
                         
@@ -223,6 +300,15 @@ struct SourceFilesView: View {
         }
     }
     
+    private func directoryPathTooltip(for category: SourceFileCategory) -> String {
+        switch category {
+        case .apiDocumentation:
+            return "API documentation files are stored in the api_training_data directory. This directory contains Swift interface files with API definitions and documentation comments, used by the dataset generation scripts to create training data."
+        case .codeExamples:
+            return "Code example files are stored in the code_examples directory. This directory contains complete, working SwiftUI examples used by the dataset generation scripts to create training data from practical code patterns."
+        }
+    }
+    
     private func handleFileSelection(_ result: Result<[URL], Error>, category: SourceFileCategory) {
         switch result {
         case .success(let urls):
@@ -235,7 +321,25 @@ struct SourceFilesView: View {
     }
 }
 
-#Preview {
+#Preview("No Docs") {
+    let fileSystemManager = FileSystemManager()
+    let pythonExecutor = PythonScriptExecutor()
+    let workflowEngine = WorkflowEngineObservable(
+        modelContext: ProjectModel.preview.mainContext,
+        pythonExecutor: pythonExecutor,
+        fileSystemManager: fileSystemManager
+    )
+    
+    let observable = StepDetailObservable(
+        workflowEngine: workflowEngine,
+        fileSystemManager: fileSystemManager,
+        pythonExecutor: pythonExecutor
+    )
+    
+    SourceFilesView(observable: observable)
+}
+
+#Preview("With Docs") {
     let fileSystemManager = FileSystemManager()
     let pythonExecutor = PythonScriptExecutor()
     let workflowEngine = WorkflowEngineObservable(

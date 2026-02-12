@@ -88,7 +88,7 @@ final class StepDetailObservable {
         
         let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
         var addedCount = 0
-        var failedItems: [String] = []
+        var failedItems: [(name: String, reason: String)] = []
         
         for url in urls {
             // Start accessing security-scoped resource
@@ -99,13 +99,21 @@ final class StepDetailObservable {
                 }
             }
             
+            // Validate the file or folder first
+            let validationResult = fileSystemManager.validateFileOrFolder(url)
+            
+            guard validationResult.isValid else {
+                failedItems.append((name: validationResult.fileName, reason: validationResult.errorMessage ?? "Unknown error"))
+                continue
+            }
+            
             do {
                 // Detect whether URL is a file or folder
                 var isDir: ObjCBool = false
                 let fileManager = FileManager.default
                 
                 guard fileManager.fileExists(atPath: url.path, isDirectory: &isDir) else {
-                    failedItems.append(url.lastPathComponent)
+                    failedItems.append((name: url.lastPathComponent, reason: "File or folder not found"))
                     continue
                 }
                 
@@ -114,7 +122,7 @@ final class StepDetailObservable {
                     let swiftFiles = try fileSystemManager.findSwiftFiles(in: url)
                     
                     if swiftFiles.isEmpty {
-                        failedItems.append("\(url.lastPathComponent) (no .swift files found)")
+                        failedItems.append((name: url.lastPathComponent, reason: "No .swift files found in folder or its subdirectories"))
                         continue
                     }
                     
@@ -128,17 +136,11 @@ final class StepDetailObservable {
                             sourceFiles.append(reference)
                             addedCount += 1
                         } catch {
-                            failedItems.append(swiftFile.lastPathComponent)
+                            failedItems.append((name: swiftFile.lastPathComponent, reason: error.localizedDescription))
                         }
                     }
                 } else {
                     // Process individual file
-                    // Validate file extension
-                    guard url.pathExtension.lowercased() == "swift" else {
-                        failedItems.append("\(url.lastPathComponent) (invalid file type)")
-                        continue
-                    }
-                    
                     let reference = try fileSystemManager.addSourceFile(
                         at: url,
                         to: projectURL,
@@ -148,7 +150,7 @@ final class StepDetailObservable {
                     addedCount += 1
                 }
             } catch {
-                failedItems.append(url.lastPathComponent)
+                failedItems.append((name: url.lastPathComponent, reason: error.localizedDescription))
             }
         }
         
@@ -160,7 +162,8 @@ final class StepDetailObservable {
         }
         
         if failedItems.isEmpty == false {
-            errorMessage = "Failed to add \(failedItems.count) item(s): \(failedItems.joined(separator: ", "))"
+            let failureDetails = failedItems.map { "\(String($0.name)): \($0.reason)" }.joined(separator: "\n• ")
+            errorMessage = "Failed to add \(failedItems.count) item(s):\n• \(failureDetails)"
         }
     }
     

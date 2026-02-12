@@ -46,7 +46,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Test that help section is displayed with correct content
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 4. Implement file picker integration for API Documentation
+- [x] 4. Implement file picker integration for API Documentation
   - Add `showingAPIDocumentationPicker` state variable
   - Configure file importer to accept folders and .swift files
   - Set appropriate label for API Documentation picker
@@ -58,7 +58,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Test that selected files are added with correct category
   - _Requirements: 1.4_
 
-- [ ] 5. Implement file picker integration for Code Examples
+- [x] 5. Implement file picker integration for Code Examples
   - Add `showingCodeExamplesPicker` state variable
   - Configure file importer to accept folders and .swift files
   - Set appropriate label for Code Examples picker
@@ -70,7 +70,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Test that selected files are added with correct category
   - _Requirements: 1.5_
 
-- [ ] 6. Add directory path display and guidance
+- [x] 6. Add directory path display and guidance
   - Display target directory paths in each category section
   - Add tooltips or help text explaining directory purposes
   - Show directory path for each file in the list
@@ -82,7 +82,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Test that file list shows directory information
   - _Requirements: 2.1, 2.2, 2.6_
 
-- [ ] 7. Implement file validation and error handling
+- [x] 7. Implement file validation and error handling
   - Add validation in FileSystemManager to check file extensions
   - Display error messages for invalid file types
   - Handle folder access errors gracefully

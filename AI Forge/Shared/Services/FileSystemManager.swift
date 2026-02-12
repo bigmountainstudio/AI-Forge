@@ -224,6 +224,73 @@ final class FileSystemManager {
     func validateFilePath(_ path: String) -> Bool {
         return fileManager.fileExists(atPath: path)
     }
+    
+    /// Validates that a file has a .swift extension
+    /// - Parameter fileURL: The file URL to validate
+    /// - Returns: True if the file has a .swift extension
+    func isValidSwiftFile(_ fileURL: URL) -> Bool {
+        return fileURL.pathExtension.lowercased() == "swift"
+    }
+    
+    /// Validates that a folder exists and is accessible
+    /// - Parameter folderURL: The folder URL to validate
+    /// - Throws: FileSystemError if the folder cannot be accessed
+    func validateFolder(_ folderURL: URL) throws {
+        guard fileManager.fileExists(atPath: folderURL.path) else {
+            throw FileSystemError.directoryNotFound(folderURL.path)
+        }
+        
+        var isDir: ObjCBool = false
+        guard fileManager.fileExists(atPath: folderURL.path, isDirectory: &isDir), isDir.boolValue else {
+            throw FileSystemError.notADirectory(folderURL.path)
+        }
+    }
+    
+    /// Validates a file or folder URL and returns detailed error information
+    /// - Parameter url: The URL to validate
+    /// - Returns: A validation result containing success status and error details
+    func validateFileOrFolder(_ url: URL) -> FileValidationResult {
+        let fileName = url.lastPathComponent
+        
+        // Check if path exists
+        guard fileManager.fileExists(atPath: url.path) else {
+            return FileValidationResult(
+                isValid: false,
+                fileName: fileName,
+                errorMessage: "File or folder not found at path: \(url.path)"
+            )
+        }
+        
+        // Check if it's a directory or file
+        var isDir: ObjCBool = false
+        fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
+        
+        if isDir.boolValue {
+            // It's a folder - validate it's accessible
+            do {
+                try validateFolder(url)
+                return FileValidationResult(isValid: true, fileName: fileName, errorMessage: nil)
+            } catch {
+                return FileValidationResult(
+                    isValid: false,
+                    fileName: fileName,
+                    errorMessage: "Cannot access folder '\(fileName)': \(error.localizedDescription)"
+                )
+            }
+        } else {
+            // It's a file - validate extension
+            if isValidSwiftFile(url) {
+                return FileValidationResult(isValid: true, fileName: fileName, errorMessage: nil)
+            } else {
+                let fileExtension = url.pathExtension.isEmpty ? "no extension" : ".\(url.pathExtension)"
+                return FileValidationResult(
+                    isValid: false,
+                    fileName: fileName,
+                    errorMessage: "Invalid file type '\(fileExtension)' for '\(fileName)'. Only .swift files are supported."
+                )
+            }
+        }
+    }
 }
 
 // MARK: - Errors
@@ -235,6 +302,9 @@ enum FileSystemError: Error, LocalizedError {
     case directoryNotFound(String)
     case notADirectory(String)
     case cannotEnumerateDirectory(String)
+    case invalidFileExtension(String, String) // (fileName, extension)
+    case folderAccessDenied(String)
+    case noSwiftFilesInFolder(String)
     
     var errorDescription: String? {
         switch self {
@@ -250,6 +320,20 @@ enum FileSystemError: Error, LocalizedError {
             return "Path is not a directory: \(path)"
         case .cannotEnumerateDirectory(let path):
             return "Cannot access or enumerate directory at path: \(path)"
+        case .invalidFileExtension(let fileName, let ext):
+            return "Invalid file type '\(ext)' for '\(fileName)'. Only .swift files are supported."
+        case .folderAccessDenied(let folderName):
+            return "Cannot access folder '\(folderName)'. Permission denied or folder is inaccessible."
+        case .noSwiftFilesInFolder(let folderName):
+            return "No .swift files found in folder '\(folderName)' or its subdirectories."
         }
     }
+}
+
+// MARK: - Validation Result
+
+struct FileValidationResult {
+    let isValid: Bool
+    let fileName: String
+    let errorMessage: String?
 }

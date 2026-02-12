@@ -72,7 +72,19 @@ struct HomeView: View {
         }
     }
 }
+
+#Preview("With Data") {
+    HomeView()
+        .task {
+            await oo.fetch()
+        }
+}
+
+#Preview("No Data") {
+    HomeView()
+}
 ```
+* Create separate previews for different states (e.g., with data, no data, loading, error, conditional displaying of UI) to ensure UI handles all scenarios gracefully.
 
 ## Custom View Modifiers
 ```swift
