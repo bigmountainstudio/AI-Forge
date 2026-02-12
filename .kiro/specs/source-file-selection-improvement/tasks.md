@@ -98,7 +98,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Test error messages for inaccessible folders
   - _Requirements: 3.5, 3.6, 3.7_
 
-- [ ] 8. Implement file organization in FileSystemManager
+- [x] 8. Implement file organization in FileSystemManager
   - Ensure API documentation files are placed in `../api_training_data/`
   - Ensure code example files are placed in `code_examples/`
   - Create directories if they don't exist

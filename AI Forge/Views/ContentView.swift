@@ -56,12 +56,14 @@ struct ContentView: View {
             appDelegate?.modelContext = modelContext
         }
         .onChange(of: selectedProject) { _, newProject in
-            selectedStep = nil
             if let project = newProject {
+                selectedStep = project.workflowSteps.sorted(by: { $0.stepNumber < $1.stepNumber }).first { $0.status != .completed }
                 if workflowEngine == nil {
                     workflowEngine = createWorkflowEngine()
                 }
                 workflowEngine?.loadProject(project)
+            } else {
+                selectedStep = nil
             }
         }
         .sheet(isPresented: $showingCreateProject) {

@@ -18,10 +18,8 @@ struct WorkflowStepRowView: View {
                     .font(.title)
                     .foregroundStyle(.secondary)
                 
-                HStack {
-                    Text(step.title)
-                        .font(.headline)
-                }
+                Text(step.title)
+                    .font(.headline)
                 
                 Text(step.stepDescription)
                     .font(.subheadline)

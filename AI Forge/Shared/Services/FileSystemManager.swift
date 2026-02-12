@@ -77,15 +77,23 @@ final class FileSystemManager {
         }
         
         // Determine destination directory based on category
-        let categorySubdir = category == .apiDocumentation ? "api_docs" : "code_examples"
-        let sourceDir = projectURL.appendingPathComponent("source/\(categorySubdir)", isDirectory: true)
+        // API Documentation: ../api_training_data/
+        // Code Examples: code_examples/
+        let destinationDir: URL
+        if category == .apiDocumentation {
+            // Go up one level from project directory, then into api_training_data
+            destinationDir = projectURL.deletingLastPathComponent().appendingPathComponent("api_training_data", isDirectory: true)
+        } else {
+            // Place in code_examples subdirectory within project
+            destinationDir = projectURL.appendingPathComponent("code_examples", isDirectory: true)
+        }
         
         // Create category directory if it doesn't exist
-        try fileManager.createDirectory(at: sourceDir, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: destinationDir, withIntermediateDirectories: true)
         
         // Copy file to destination
         let fileName = sourceURL.lastPathComponent
-        let destinationURL = sourceDir.appendingPathComponent(fileName)
+        let destinationURL = destinationDir.appendingPathComponent(fileName)
         
         // If file already exists, remove it first
         if fileManager.fileExists(atPath: destinationURL.path) {
@@ -129,26 +137,29 @@ final class FileSystemManager {
     func listSourceFiles(in projectURL: URL, category: SourceFileCategory? = nil) throws -> [SourceFileReference] {
         var sourceFiles: [SourceFileReference] = []
         
-        let sourceDir = projectURL.appendingPathComponent("source", isDirectory: true)
-        
-        // Determine which subdirectories to scan
-        let subdirs: [(String, SourceFileCategory)]
+        // Determine which directories to scan based on category
+        let directoriesToScan: [(URL, SourceFileCategory)]
         if let category = category {
-            let subdir = category == .apiDocumentation ? "api_docs" : "code_examples"
-            subdirs = [(subdir, category)]
+            let dir: URL
+            if category == .apiDocumentation {
+                dir = projectURL.deletingLastPathComponent().appendingPathComponent("api_training_data", isDirectory: true)
+            } else {
+                dir = projectURL.appendingPathComponent("code_examples", isDirectory: true)
+            }
+            directoriesToScan = [(dir, category)]
         } else {
-            subdirs = [("api_docs", .apiDocumentation), ("code_examples", .codeExamples)]
+            let apiDir = projectURL.deletingLastPathComponent().appendingPathComponent("api_training_data", isDirectory: true)
+            let codeDir = projectURL.appendingPathComponent("code_examples", isDirectory: true)
+            directoriesToScan = [(apiDir, .apiDocumentation), (codeDir, .codeExamples)]
         }
         
-        // Scan each subdirectory
-        for (subdir, cat) in subdirs {
-            let categoryDir = sourceDir.appendingPathComponent(subdir, isDirectory: true)
-            
-            guard fileManager.fileExists(atPath: categoryDir.path) else {
+        // Scan each directory
+        for (dir, cat) in directoriesToScan {
+            guard fileManager.fileExists(atPath: dir.path) else {
                 continue
             }
             
-            let contents = try fileManager.contentsOfDirectory(at: categoryDir, includingPropertiesForKeys: [.fileSizeKey])
+            let contents = try fileManager.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey])
             
             for fileURL in contents where fileURL.hasDirectoryPath == false {
                 let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)

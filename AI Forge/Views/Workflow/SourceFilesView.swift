@@ -76,57 +76,9 @@ struct SourceFilesView: View {
             Text("Source Files")
                 .font(.headline)
             
-            Text("Add API documentation and code examples to generate training data. You can select individual files or entire folders.")
+            Text("Source files to generate training data. Select individual files or entire folders.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("API Documentation", systemImage: "doc.text")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                    
-                    Text("Swift interface files with API definitions")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "folder.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        
-                        Text("../api_training_data/")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .help("API documentation files are stored in the api_training_data directory, which is used by the dataset generation scripts to create training data from API definitions.")
-                    }
-                }
-                
-                Divider()
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("Code Examples", systemImage: "chevron.left.forwardslash.chevron.right")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                    
-                    Text("Complete working SwiftUI examples")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "folder.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        
-                        Text("code_examples/")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .help("Code example files are stored in the code_examples directory, which is used by the dataset generation scripts to create training data from working examples.")
-                    }
-                }
-            }
-            .padding(8)
-            .background(.regularMaterial, in: .rect(cornerRadius: 8))
         }
     }
     
@@ -150,7 +102,7 @@ struct SourceFilesView: View {
                     selectedPickerCategory = .apiDocumentation
                     showingFilePicker = true
                 } label: {
-                    Label("Add API Docs", systemImage: "doc.text.plus")
+                    Label("Add API Docs", systemImage: "doc.text")
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Add API Documentation")
