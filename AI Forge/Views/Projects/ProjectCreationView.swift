@@ -5,7 +5,8 @@ import SwiftData
 
 struct ProjectCreationView: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable var projectManager: ProjectManagerObservable
+    @Environment(\.modelContext) private var context
+    let fileSystemManager: FileSystemManager
     
     @State private var projectName = ""
     @State private var customizationDescription = ""
@@ -87,17 +88,34 @@ struct ProjectCreationView: View {
         
         Task {
             do {
-                _ = try await projectManager.createProject(
-                    name: projectName,
-                    customizationDescription: customizationDescription
-                )
-                await projectManager.loadProjects()
-                
-                if let loadError = projectManager.errorMessage {
-                    errorMessage = loadError
-                } else {
-                    dismiss()
+                // Validate project name
+                guard ValidationHelpers.isValidProjectName(projectName) else {
+                    errorMessage = "Project name is invalid. Use only letters, numbers, spaces, hyphens, and underscores."
+                    isCreating = false
+                    return
                 }
+                
+                // Create project directory
+                let projectDirectory: URL
+                do {
+                    projectDirectory = try fileSystemManager.createProjectDirectory(projectName: projectName)
+                } catch {
+                    errorMessage = "Failed to create project directory for '\(projectName)': \(error.localizedDescription)"
+                    isCreating = false
+                    return
+                }
+                
+                // Create project model
+                let project = ProjectModel(name: projectName, customizationDescription: customizationDescription)
+                project.projectDirectoryPath = projectDirectory.path
+                
+                // Insert into context
+                context.insert(project)
+                
+                // Save context
+                try context.save()
+                
+                dismiss()
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -107,10 +125,6 @@ struct ProjectCreationView: View {
 }
 
 #Preview {
-    ProjectCreationView(
-        projectManager: ProjectManagerObservable(
-            modelContext: ProjectModel.preview.mainContext,
-            fileSystemManager: FileSystemManager()
-        )
-    )
+    ProjectCreationView(fileSystemManager: FileSystemManager())
+        .modelContainer(ProjectModel.preview)
 }

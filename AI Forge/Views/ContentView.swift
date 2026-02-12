@@ -6,7 +6,6 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appDelegate) private var appDelegate
-    @State private var projectManager: ProjectManagerObservable?
     @State private var selectedProject: ProjectModel?
     @State private var selectedStep: WorkflowStepModel?
     @State private var workflowEngine: WorkflowEngineObservable?
@@ -14,12 +13,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationSplitView {
-            if let manager = projectManager {
-                ProjectListView(
-                    projectManager: manager,
-                    selectedProject: $selectedProject
-                )
-            }
+            ProjectListView(selectedProject: $selectedProject)
         } content: {
             if let project = selectedProject {
                 if let engine = workflowEngine {
@@ -58,11 +52,8 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            if projectManager == nil {
-                projectManager = createProjectManager()
-                // Set modelContext in AppDelegate for shutdown handling
-                appDelegate?.modelContext = modelContext
-            }
+            // Set modelContext in AppDelegate for shutdown handling
+            appDelegate?.modelContext = modelContext
         }
         .onChange(of: selectedProject) { _, newProject in
             selectedStep = nil
@@ -74,9 +65,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingCreateProject) {
-            if let manager = projectManager {
-                ProjectCreationView(projectManager: manager)
-            }
+            ProjectCreationView(fileSystemManager: FileSystemManager())
         }
         .onReceive(NotificationCenter.default.publisher(for: .createNewProject)) { _ in
             showingCreateProject = true
@@ -91,19 +80,13 @@ struct ContentView: View {
     }
     
     private func saveCurrentProject() {
-        guard let project = selectedProject,
-              let manager = projectManager else { return }
+        guard let project = selectedProject else { return }
         
         do {
-            try manager.saveProject(project)
+            try modelContext.save()
         } catch {
-            // Error is already logged in ProjectManagerObservable
+            // Log error
         }
-    }
-    
-    private func createProjectManager() -> ProjectManagerObservable {
-        let fileSystemManager = FileSystemManager()
-        return ProjectManagerObservable(modelContext: modelContext, fileSystemManager: fileSystemManager)
     }
     
     private func createWorkflowEngine() -> WorkflowEngineObservable {

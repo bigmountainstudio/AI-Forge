@@ -4,18 +4,18 @@ import SwiftUI
 import SwiftData
 
 struct ProjectListView: View {
-    @Bindable var projectManager: ProjectManagerObservable
+    @Environment(\.modelContext) private var context
+    @Query(sort: \ProjectModel.updatedAt, order: .reverse) private var projects: [ProjectModel]
     @Binding var selectedProject: ProjectModel?
     @State private var showingCreateProject = false
     @State private var projectToDelete: ProjectModel?
     @State private var showingDeleteConfirmation = false
     
+    private let fileSystemManager = FileSystemManager()
+    
     var body: some View {
         Group {
-            if projectManager.isLoading {
-                ProgressView("Loading projects...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if projectManager.projects.isEmpty {
+            if projects.isEmpty {
                 ContentUnavailableView {
                     Label("No Projects", systemImage: "folder.badge.plus")
                 } description: {
@@ -31,7 +31,7 @@ struct ProjectListView: View {
                     .accessibilityHint("Opens a form to create your first fine-tuning project")
                 }
             } else {
-                List(projectManager.projects, selection: $selectedProject) { project in
+                List(projects, selection: $selectedProject) { project in
                     ProjectRowView(project: project)
                         .tag(project)
                         .contextMenu {
@@ -44,7 +44,7 @@ struct ProjectListView: View {
                         }
                         .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
-                .animation(.easeInOut(duration: 0.3), value: projectManager.projects.count)
+                .animation(.easeInOut(duration: 0.3), value: projects.count)
             }
         }
         .navigationTitle("Projects")
@@ -60,7 +60,7 @@ struct ProjectListView: View {
             }
         }
         .sheet(isPresented: $showingCreateProject) {
-            ProjectCreationView(projectManager: projectManager)
+            ProjectCreationView(fileSystemManager: fileSystemManager)
         }
         .alert("Delete Project", isPresented: $showingDeleteConfirmation, presenting: projectToDelete) { project in
             Button("Cancel", role: .cancel) {
@@ -68,19 +68,22 @@ struct ProjectListView: View {
             }
             
             Button("Delete", role: .destructive) {
-                Task {
-                    if selectedProject?.id == project.id {
-                        selectedProject = nil
-                    }
-                    try? await projectManager.deleteProject(project)
-                    projectToDelete = nil
+                if selectedProject?.id == project.id {
+                    selectedProject = nil
                 }
+                
+                // Delete project directory
+                let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
+                try? fileSystemManager.deleteProjectDirectory(at: projectURL)
+                
+                // Delete from context
+                context.delete(project)
+                try? context.save()
+                
+                projectToDelete = nil
             }
         } message: { project in
             Text("Are you sure you want to delete '\(project.name)'? This action cannot be undone.")
-        }
-        .task {
-            await projectManager.loadProjects()
         }
         .onDeleteCommand {
             if let project = selectedProject {
@@ -91,15 +94,16 @@ struct ProjectListView: View {
     }
 }
 
-#Preview {
+#Preview("With Data") {
     NavigationStack {
-        ProjectListView(
-            projectManager: ProjectManagerObservable(
-                modelContext: ProjectModel.preview.mainContext,
-                fileSystemManager: FileSystemManager()
-            ),
-            selectedProject: .constant(nil)
-        )
+        ProjectListView(selectedProject: .constant(nil))
     }
     .modelContainer(ProjectModel.preview)
+}
+
+#Preview("No Data") {
+    NavigationStack {
+        ProjectListView(selectedProject: .constant(nil))
+    }
+    .modelContainer(ProjectModel.emptyPreview)
 }
