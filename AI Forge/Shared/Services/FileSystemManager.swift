@@ -168,6 +168,54 @@ final class FileSystemManager {
         return sourceFiles
     }
     
+    // MARK: - Folder Scanning
+    
+    /// Recursively discovers all .swift files in a directory and its subdirectories
+    /// - Parameter directory: The directory URL to scan
+    /// - Returns: Array of URLs pointing to .swift files found
+    /// - Throws: FileSystemError if the directory cannot be accessed or enumerated
+    func findSwiftFiles(in directory: URL) throws -> [URL] {
+        var swiftFiles: [URL] = []
+        
+        // Verify directory exists and is accessible
+        guard fileManager.fileExists(atPath: directory.path) else {
+            throw FileSystemError.directoryNotFound(directory.path)
+        }
+        
+        // Check if path is actually a directory
+        var isDir: ObjCBool = false
+        guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDir), isDir.boolValue else {
+            throw FileSystemError.notADirectory(directory.path)
+        }
+        
+        // Create enumerator to recursively scan directory
+        guard let enumerator = fileManager.enumerator(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            throw FileSystemError.cannotEnumerateDirectory(directory.path)
+        }
+        
+        // Iterate through all files in directory and subdirectories
+        for case let fileURL as URL in enumerator {
+            do {
+                // Get file properties
+                let resourceValues = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+                
+                // Check if it's a regular file (not a directory)
+                if resourceValues.isRegularFile == true && fileURL.pathExtension == "swift" {
+                    swiftFiles.append(fileURL)
+                }
+            } catch {
+                // Skip files that cannot be accessed
+                continue
+            }
+        }
+        
+        return swiftFiles
+    }
+    
     // MARK: - Validation
     
     /// Validates that a file path exists and is accessible
@@ -184,6 +232,9 @@ enum FileSystemError: Error, LocalizedError {
     case fileNotFound(String)
     case directoryCreationFailed(String)
     case fileCopyFailed(String)
+    case directoryNotFound(String)
+    case notADirectory(String)
+    case cannotEnumerateDirectory(String)
     
     var errorDescription: String? {
         switch self {
@@ -193,6 +244,12 @@ enum FileSystemError: Error, LocalizedError {
             return "Failed to create directory at path: \(path)"
         case .fileCopyFailed(let path):
             return "Failed to copy file to path: \(path)"
+        case .directoryNotFound(let path):
+            return "Directory not found at path: \(path)"
+        case .notADirectory(let path):
+            return "Path is not a directory: \(path)"
+        case .cannotEnumerateDirectory(let path):
+            return "Cannot access or enumerate directory at path: \(path)"
         }
     }
 }

@@ -80,6 +80,90 @@ final class StepDetailObservable {
         }
     }
     
+    func addSourceFilesOrFolders(_ urls: [URL], category: SourceFileCategory) async {
+        guard let project = currentProject else {
+            errorMessage = "Cannot add source files: No project is currently loaded"
+            return
+        }
+        
+        let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
+        var addedCount = 0
+        var failedItems: [String] = []
+        
+        for url in urls {
+            // Start accessing security-scoped resource
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessing {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+            
+            do {
+                // Detect whether URL is a file or folder
+                var isDir: ObjCBool = false
+                let fileManager = FileManager.default
+                
+                guard fileManager.fileExists(atPath: url.path, isDirectory: &isDir) else {
+                    failedItems.append(url.lastPathComponent)
+                    continue
+                }
+                
+                if isDir.boolValue {
+                    // Process folder recursively
+                    let swiftFiles = try fileSystemManager.findSwiftFiles(in: url)
+                    
+                    if swiftFiles.isEmpty {
+                        failedItems.append("\(url.lastPathComponent) (no .swift files found)")
+                        continue
+                    }
+                    
+                    for swiftFile in swiftFiles {
+                        do {
+                            let reference = try fileSystemManager.addSourceFile(
+                                at: swiftFile,
+                                to: projectURL,
+                                category: category
+                            )
+                            sourceFiles.append(reference)
+                            addedCount += 1
+                        } catch {
+                            failedItems.append(swiftFile.lastPathComponent)
+                        }
+                    }
+                } else {
+                    // Process individual file
+                    // Validate file extension
+                    guard url.pathExtension.lowercased() == "swift" else {
+                        failedItems.append("\(url.lastPathComponent) (invalid file type)")
+                        continue
+                    }
+                    
+                    let reference = try fileSystemManager.addSourceFile(
+                        at: url,
+                        to: projectURL,
+                        category: category
+                    )
+                    sourceFiles.append(reference)
+                    addedCount += 1
+                }
+            } catch {
+                failedItems.append(url.lastPathComponent)
+            }
+        }
+        
+        // Update error message based on results
+        if addedCount > 0 {
+            errorMessage = nil
+            // Reload to ensure UI is in sync with file system
+            await loadSourceFiles()
+        }
+        
+        if failedItems.isEmpty == false {
+            errorMessage = "Failed to add \(failedItems.count) item(s): \(failedItems.joined(separator: ", "))"
+        }
+    }
+    
     func removeSourceFile(_ reference: SourceFileReference) async {
         do {
             try fileSystemManager.removeSourceFile(reference)

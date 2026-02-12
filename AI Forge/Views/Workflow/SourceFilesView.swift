@@ -6,10 +6,13 @@ import UniformTypeIdentifiers
 
 struct SourceFilesView: View {
     @Bindable var observable: StepDetailObservable
-    @State private var showingFilePicker = false
+    @State private var showingAPIDocumentationPicker = false
+    @State private var showingCodeExamplesPicker = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            helpSection
+            
             if observable.sourceFiles.isEmpty {
                 emptyStateView
             } else {
@@ -19,18 +22,55 @@ struct SourceFilesView: View {
         .padding()
         .animation(.easeInOut(duration: 0.3), value: observable.sourceFiles.count)
         .fileImporter(
-            isPresented: $showingFilePicker,
-            allowedContentTypes: [.text, .plainText, .sourceCode],
+            isPresented: $showingAPIDocumentationPicker,
+            allowedContentTypes: [.folder, .sourceCode, .plainText],
             allowsMultipleSelection: true
         ) { result in
-            switch result {
-            case .success(let urls):
-                Task {
-                    await observable.addSourceFiles(urls)
+            handleFileSelection(result, category: .apiDocumentation)
+        }
+        .fileImporter(
+            isPresented: $showingCodeExamplesPicker,
+            allowedContentTypes: [.folder, .sourceCode, .plainText],
+            allowsMultipleSelection: true
+        ) { result in
+            handleFileSelection(result, category: .codeExamples)
+        }
+    }
+    
+    private var helpSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Source Files")
+                .font(.headline)
+            
+            Text("Add API documentation and code examples to generate training data. You can select individual files or entire folders.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("API Documentation", systemImage: "doc.text")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                    
+                    Text("Swift interface files with API definitions")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-            case .failure(let error):
-                observable.errorMessage = "Failed to select files: \(error.localizedDescription)"
+                
+                Divider()
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Code Examples", systemImage: "chevron.left.forwardslash.chevron.right")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                    
+                    Text("Complete working SwiftUI examples")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .padding(8)
+            .background(.regularMaterial, in: .rect(cornerRadius: 8))
         }
     }
     
@@ -49,14 +89,25 @@ struct SourceFilesView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             
-            Button {
-                showingFilePicker = true
-            } label: {
-                Label("Add Files", systemImage: "plus.circle.fill")
+            HStack(spacing: 12) {
+                Button {
+                    showingAPIDocumentationPicker = true
+                } label: {
+                    Label("Add API Docs", systemImage: "doc.text.plus")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Add API Documentation")
+                .accessibilityHint("Opens a file picker to select API documentation files or folders")
+                
+                Button {
+                    showingCodeExamplesPicker = true
+                } label: {
+                    Label("Add Examples", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Add Code Examples")
+                .accessibilityHint("Opens a file picker to select code example files or folders")
             }
-            .buttonStyle(.borderedProminent)
-            .accessibilityLabel("Add source files")
-            .accessibilityHint("Opens a file picker to select API documentation and code examples")
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -64,26 +115,57 @@ struct SourceFilesView: View {
     }
     
     private var fileListView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            let apiDocs = observable.sourceFiles.filter { $0.category == .apiDocumentation }
+            let codeExamples = observable.sourceFiles.filter { $0.category == .codeExamples }
+            
+            if apiDocs.isEmpty == false {
+                categorySection(title: "API Documentation", files: apiDocs, icon: "doc.text")
+            }
+            
+            if codeExamples.isEmpty == false {
+                categorySection(title: "Code Examples", files: codeExamples, icon: "chevron.left.forwardslash.chevron.right")
+            }
+            
+            HStack(spacing: 12) {
+                Button {
+                    showingAPIDocumentationPicker = true
+                } label: {
+                    Label("Add API Docs", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Add more API documentation")
+                
+                Button {
+                    showingCodeExamplesPicker = true
+                } label: {
+                    Label("Add Examples", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Add more code examples")
+            }
+            .padding(.top, 8)
+        }
+    }
+    
+    private func categorySection(title: String, files: [SourceFileReference], icon: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Source Files")
-                    .font(.headline)
+                Label(title, systemImage: icon)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                 
                 Spacer()
                 
-                Button {
-                    showingFilePicker = true
-                } label: {
-                    Label("Add Files", systemImage: "plus")
-                }
-                .accessibilityLabel("Add more files")
-                .accessibilityHint("Opens a file picker to add additional source files")
+                Text("\(files.count) file\(files.count == 1 ? "" : "s")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             
             List {
-                ForEach(observable.sourceFiles) { file in
+                ForEach(files) { file in
                     HStack {
-                        Image(systemName: iconForCategory(file.category))
+                        Image(systemName: icon)
                             .foregroundStyle(.blue)
                         
                         VStack(alignment: .leading, spacing: 2) {
@@ -98,7 +180,7 @@ struct SourceFilesView: View {
                                 Text("•")
                                     .foregroundStyle(.secondary)
                                 
-                                Text(categoryLabel(file.category))
+                                Text(directoryPath(for: file.category))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -130,22 +212,25 @@ struct SourceFilesView: View {
                     .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
-            .frame(minHeight: 200)
-            .animation(.easeInOut(duration: 0.3), value: observable.sourceFiles.count)
+            .frame(minHeight: 100)
         }
     }
     
-    private func iconForCategory(_ category: SourceFileCategory) -> String {
+    private func directoryPath(for category: SourceFileCategory) -> String {
         switch category {
-        case .apiDocumentation: return "doc.text"
-        case .codeExamples: return "chevron.left.forwardslash.chevron.right"
+        case .apiDocumentation: return "../api_training_data/"
+        case .codeExamples: return "code_examples/"
         }
     }
     
-    private func categoryLabel(_ category: SourceFileCategory) -> String {
-        switch category {
-        case .apiDocumentation: return "API Documentation"
-        case .codeExamples: return "Code Examples"
+    private func handleFileSelection(_ result: Result<[URL], Error>, category: SourceFileCategory) {
+        switch result {
+        case .success(let urls):
+            Task {
+                await observable.addSourceFilesOrFolders(urls, category: category)
+            }
+        case .failure(let error):
+            observable.errorMessage = "Failed to select files: \(error.localizedDescription)"
         }
     }
 }

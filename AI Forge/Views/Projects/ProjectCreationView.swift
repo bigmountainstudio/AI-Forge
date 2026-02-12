@@ -92,7 +92,12 @@ struct ProjectCreationView: View {
                     customizationDescription: customizationDescription
                 )
                 await projectManager.loadProjects()
-                dismiss()
+                
+                if let loadError = projectManager.errorMessage {
+                    errorMessage = loadError
+                } else {
+                    dismiss()
+                }
             } catch {
                 errorMessage = error.localizedDescription
             }

@@ -8,7 +8,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
 
 ## Tasks
 
-- [ ] 1. Enhance FileSystemManager with folder scanning capability
+- [x] 1. Enhance FileSystemManager with folder scanning capability
   - Add `findSwiftFiles(in:)` method to recursively discover .swift files in directories
   - Implement file validation to ensure only .swift files are processed
   - Add error handling for inaccessible folders and permission issues
@@ -18,7 +18,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - **Property 1: Recursive folder scanning discovers all Swift files**
   - **Validates: Requirements 1.6, 3.1, 3.2**
 
-- [ ] 2. Enhance StepDetailObservable with folder/file handling
+- [x] 2. Enhance StepDetailObservable with folder/file handling
   - Add `addSourceFilesOrFolders(_:category:)` method to handle both files and folders
   - Implement logic to detect whether URL is a file or folder
   - Call FileSystemManager to process folders recursively or add individual files
@@ -33,7 +33,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - **Property 2: Individual file selection adds only selected files**
   - **Validates: Requirements 1.7**
 
-- [ ] 3. Enhance SourceFilesView with separate category sections
+- [x] 3. Enhance SourceFilesView with separate category sections
   - Refactor view to display two distinct sections: API Documentation and Code Examples
   - Add separate buttons for each category with appropriate icons and labels
   - Implement `categorySection(title:files:icon:)` helper to display files grouped by category
