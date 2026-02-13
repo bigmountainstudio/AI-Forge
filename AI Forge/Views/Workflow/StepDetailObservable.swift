@@ -341,14 +341,42 @@ final class StepDetailObservable {
     }
     
     private func getScriptPath(for stepNumber: Int) -> String {
-        // These would be configured or discovered at runtime
+        let scriptName: String
+        
         switch stepNumber {
-        case 2: return "/path/to/generate_dataset.py"
-        case 4: return "/path/to/fine_tune.py"
-        case 5: return "/path/to/evaluate.py"
-        case 6: return "/path/to/convert_model.py"
+        case 1: scriptName = "copy_code_examples.py"
+        case 2: scriptName = "generate_unified_dataset.py"
+        case 4: scriptName = "generate_optimized_dataset.py"
+        case 5: scriptName = "evaluate_overfitting.sh"
+        case 6: scriptName = "convert_to_ollama.sh"
         default: return ""
         }
+        
+        // Try bundle resources first
+        if let bundlePath = Bundle.main.resourcePath {
+            let bundleScriptPath = "\(bundlePath)/scripts/\(scriptName)"
+            if FileManager.default.fileExists(atPath: bundleScriptPath) {
+                return bundleScriptPath
+            }
+        }
+        
+        // Fallback to development source directory
+        let fileManager = FileManager.default
+        let currentPath = fileManager.currentDirectoryPath
+        let devScriptPath = "\(currentPath)/AI Forge/Supporting Files/scripts/\(scriptName)"
+        
+        if fileManager.fileExists(atPath: devScriptPath) {
+            return devScriptPath
+        }
+        
+        // Try relative to home directory
+        let homeScriptPath = "~/Projects/AI Forge/AI Forge/Supporting Files/scripts/\(scriptName)".expandingTildeInPath
+        if fileManager.fileExists(atPath: homeScriptPath) {
+            return homeScriptPath
+        }
+        
+        // Return the bundle path as last resort (will fail with clear error)
+        return "\(Bundle.main.resourcePath ?? "/Applications/AI Forge.app/Contents/Resources")/scripts/\(scriptName)"
     }
     
     private func getScriptArguments(for stepNumber: Int, project: ProjectModel) -> [String] {
