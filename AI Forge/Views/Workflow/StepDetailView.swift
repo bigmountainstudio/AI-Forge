@@ -12,7 +12,7 @@ struct StepDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading) {
                 // Step header
                 VStack(alignment: .leading, spacing: 8) {
                     Text(step.title)
@@ -22,7 +22,6 @@ struct StepDetailView: View {
                         .font(.body)
                         .foregroundStyle(.secondary)
                 }
-                .padding()
                 
                 // Step-specific content
                 if let observable = stepObservable {
@@ -36,10 +35,10 @@ struct StepDetailView: View {
                             .font(.headline)
                         
                         ScrollView {
-                            // TODO: Make this text selectable so it can be copied
                             Text(observable.executionOutput)
                                 .font(.system(.body, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .textSelection(.enabled)
                         }
                         .frame(height: 200)
                         .background(.regularMaterial, in: .rect(cornerRadius: 8))
@@ -57,6 +56,7 @@ struct StepDetailView: View {
                         Text(error)
                             .foregroundStyle(.red)
                             .font(.body)
+                            .textSelection(.enabled)
                     }
                     .padding()
                     .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
@@ -111,11 +111,13 @@ struct StepDetailView: View {
                     .animation(.easeInOut(duration: 0.3), value: step.status)
                 }
             }
+            .padding()
         }
         .onAppear {
             if stepObservable == nil {
                 let fileSystemManager = FileSystemManager()
                 let pythonExecutor = PythonScriptExecutor()
+                
                 stepObservable = StepDetailObservable(
                     workflowEngine: workflowEngine,
                     fileSystemManager: fileSystemManager,
@@ -142,17 +144,22 @@ struct StepDetailView: View {
     }
 }
 
-#Preview {
-    let project = ProjectModel.mock
+#Preview("Step 1") {
+    @Previewable @State var container = ProjectModel.preview
+    
+    let context = container.mainContext
+    let projects = try! context.fetch(FetchDescriptor<ProjectModel>())
+    let project = projects.first!
     let step = project.workflowSteps[0]
     
-    StepDetailView(
+    return StepDetailView(
         step: step,
         project: project,
         workflowEngine: WorkflowEngineObservable(
-            modelContext: ProjectModel.preview.mainContext,
+            modelContext: context,
             pythonExecutor: PythonScriptExecutor(),
             fileSystemManager: FileSystemManager()
         )
     )
+    .modelContainer(container)
 }

@@ -82,7 +82,7 @@ struct ContentView: View {
     }
     
     private func saveCurrentProject() {
-        guard let project = selectedProject else { return }
+//        guard let project = selectedProject else { return }
         
         do {
             try modelContext.save()

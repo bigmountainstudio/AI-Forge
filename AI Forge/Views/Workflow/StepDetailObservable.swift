@@ -274,13 +274,6 @@ final class StepDetailObservable {
             return (isValid: false, errorMessage: "At least one source file is required. Please add API documentation files or code examples to proceed.")
         }
         
-        // Requirement 6.3: Allow completion with files in only one category
-        let apiDocCount = sourceFiles.filter { $0.category == .apiDocumentation }.count
-        let codeExampleCount = sourceFiles.filter { $0.category == .codeExamples }.count
-        
-        // Requirement 6.4: When files exist in both categories, mark step as ready for completion
-        // (This is implicitly handled by the fact that we allow completion with files in one or both categories)
-        
         return (isValid: true, errorMessage: nil)
     }
     

@@ -15,16 +15,13 @@ struct SourceFilesView: View {
                 errorBannerView(message: errorMessage)
             }
             
-            helpSection
-            
             if observable.sourceFiles.isEmpty {
                 emptyStateView
             } else {
                 fileListView
             }
         }
-        .padding()
-        .animation(.easeInOut(duration: 0.3), value: observable.sourceFiles.count)
+        .animation(.easeInOut, value: observable.sourceFiles.count)
         .fileImporter(
             isPresented: $showingFilePicker,
             allowedContentTypes: [.folder, .sourceCode, .plainText],
@@ -68,17 +65,6 @@ struct SourceFilesView: View {
             .padding(12)
             .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
             .border(.red.opacity(0.3), width: 1)
-        }
-    }
-    
-    private var helpSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Source Files")
-                .font(.headline)
-            
-            Text("Source files to generate training data. Select individual files or entire folders.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
     
@@ -306,5 +292,9 @@ struct SourceFilesView: View {
         pythonExecutor: pythonExecutor
     )
     
-    SourceFilesView(observable: observable)
+    // Add mock data for preview
+    observable.sourceFiles = SourceFileReference.mocks
+    
+    return SourceFilesView(observable: observable)
+        .padding()
 }
