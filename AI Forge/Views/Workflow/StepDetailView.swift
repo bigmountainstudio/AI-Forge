@@ -36,6 +36,7 @@ struct StepDetailView: View {
                             .font(.headline)
                         
                         ScrollView {
+                            // TODO: Make this text selectable so it can be copied
                             Text(observable.executionOutput)
                                 .font(.system(.body, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .leading)

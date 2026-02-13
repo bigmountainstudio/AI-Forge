@@ -352,31 +352,30 @@ final class StepDetailObservable {
         default: return ""
         }
         
-        // Try bundle resources first
-        if let bundlePath = Bundle.main.resourcePath {
-            let bundleScriptPath = "\(bundlePath)/scripts/\(scriptName)"
-            if FileManager.default.fileExists(atPath: bundleScriptPath) {
-                return bundleScriptPath
+        // Scripts are in Resources root, not in a scripts subfolder
+        if let scriptPath = Bundle.main.path(forResource: scriptName, ofType: nil) {
+            return scriptPath
+        }
+        
+        // Development fallback
+        if let resourcePath = Bundle.main.resourcePath {
+            let resourceURL = URL(fileURLWithPath: resourcePath)
+            let devPath = resourceURL
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+                .appendingPathComponent("AI Forge")
+                .appendingPathComponent("Supporting Files")
+                .appendingPathComponent("scripts")
+                .appendingPathComponent(scriptName)
+                .path
+            
+            if FileManager.default.fileExists(atPath: devPath) {
+                return devPath
             }
         }
         
-        // Fallback to development source directory
-        let fileManager = FileManager.default
-        let currentPath = fileManager.currentDirectoryPath
-        let devScriptPath = "\(currentPath)/AI Forge/Supporting Files/scripts/\(scriptName)"
-        
-        if fileManager.fileExists(atPath: devScriptPath) {
-            return devScriptPath
-        }
-        
-        // Try relative to home directory
-        let homeScriptPath = "~/Projects/AI Forge/AI Forge/Supporting Files/scripts/\(scriptName)".expandingTildeInPath
-        if fileManager.fileExists(atPath: homeScriptPath) {
-            return homeScriptPath
-        }
-        
-        // Return the bundle path as last resort (will fail with clear error)
-        return "\(Bundle.main.resourcePath ?? "/Applications/AI Forge.app/Contents/Resources")/scripts/\(scriptName)"
+        // Return fallback path
+        return "\(Bundle.main.resourcePath ?? "/Applications/AI Forge.app/Contents/Resources")/\(scriptName)"
     }
     
     private func getScriptArguments(for stepNumber: Int, project: ProjectModel) -> [String] {

@@ -74,7 +74,6 @@
 				4DB269CF2F3AD360009B7587 /* Sources */,
 				4DB269D02F3AD360009B7587 /* Frameworks */,
 				4DB269D12F3AD360009B7587 /* Resources */,
-				4DB269D32F3AD360009B7588 /* Copy Scripts */,
 			);
 			buildRules = (
 			);
@@ -96,7 +95,6 @@
 			buildPhases = (
 				4DD3CB442F3C6989005503B2 /* Sources */,
 				4DD3CB452F3C6989005503B2 /* Frameworks */,
-				4DD3CB462F3C6989005503B2 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -111,27 +109,6 @@
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		4DB269D32F3AD360009B7588 /* Copy Scripts */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Copy Scripts";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "mkdir -p \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_FOLDER_PATH}/Contents/Resources/scripts\"\ncp -r \"${SRCROOT}/AI Forge/Supporting Files/scripts/\"* \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_FOLDER_PATH}/Contents/Resources/scripts/\"\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXProject section */
 		4DB269CB2F3AD360009B7587 /* Project object */ = {
@@ -172,13 +149,6 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		4DB269D12F3AD360009B7587 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		4DD3CB462F3C6989005503B2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
