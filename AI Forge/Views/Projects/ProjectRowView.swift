@@ -13,19 +13,11 @@ struct ProjectRowView: View {
             Text(project.customizationDescription)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            
-            HStack {
-                Text("Step \(project.currentStepIndex + 1) of 6")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                Spacer()
-                
-                ProgressView(value: project.viewProgressPercentage)
-                    .accessibilityLabel("Project progress")
-                    .accessibilityValue("\(Int(project.viewProgressPercentage * 100)) percent complete")
-                    .animation(.easeInOut, value: project.viewProgressPercentage)
-            }
+
+            ProgressView(value: project.viewProgressPercentage)
+                .accessibilityLabel("Project progress")
+                .accessibilityValue("\(Int(project.viewProgressPercentage * 100)) percent complete")
+                .animation(.easeInOut, value: project.viewProgressPercentage)
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
