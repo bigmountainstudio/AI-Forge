@@ -78,14 +78,14 @@ struct StepDetailView: View {
                             .transition(.scale.combined(with: .opacity))
                         }
                         
-                        if step.status == .pending || step.status == .failed {
-                            Button("Execute Step") {
+                        if step.status == .pending || step.status == .failed || step.status == .completed {
+                            Button(step.status == .completed ? "Re-run Step" : "Execute Step") {
                                 Task {
                                     await observable.executeStep()
                                 }
                             }
                             .disabled(observable.isExecuting)
-                            .accessibilityLabel("Execute step")
+                            .accessibilityLabel(step.status == .completed ? "Re-run step" : "Execute step")
                             .accessibilityHint("Runs the Python script for this workflow step")
                             .opacity(observable.isExecuting ? 0.5 : 1.0)
                         }
@@ -136,6 +136,8 @@ struct StepDetailView: View {
         switch stepNumber {
         case 1:
             SourceFilesView(observable: observable)
+        case 2:
+            DatasetView(observable: observable)
         case 3:
             ConfigurationView(observable: observable)
         default:

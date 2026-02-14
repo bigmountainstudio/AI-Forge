@@ -13,6 +13,8 @@ final class StepDetailObservable {
     var currentProject: ProjectModel?
     var sourceFiles: [SourceFileReference] = []
     var configuration: FineTuningConfigurationModel?
+    var datasetEntries: [[String: String]] = []
+    var datasetStatistics: (total: Int, fileSize: String)?
     var executionOutput: String = ""
     var isExecuting = false
     var errorMessage: String?
@@ -33,6 +35,8 @@ final class StepDetailObservable {
         switch step.stepNumber {
         case 1:
             await loadSourceFiles()
+        case 2:
+            await loadDataset()
         case 3:
             configuration = project.configuration
         default:
@@ -224,6 +228,11 @@ final class StepDetailObservable {
                     try workflowEngine.markStepComplete(step)
                     errorMessage = nil
                     ErrorLogger.log("Successfully completed step '\(step.title)' for project '\(project.name)'. Categories with files: \(categoriesWithFiles.map { $0.rawValue }.joined(separator: ", "))", severity: .info, category: .workflow)
+                    
+                    // Reload step-specific data after successful execution
+                    if step.stepNumber == 2 {
+                        await loadDataset()
+                    }
                 } catch {
                     errorMessage = "Step completed but failed to save state: \(error.localizedDescription)"
                     ErrorLogger.logError(error, message: "Failed to save completion state for step '\(step.title)'", category: .database)
@@ -316,6 +325,55 @@ final class StepDetailObservable {
             errorMessage = "Failed to load source files from '\(projectURL.path)': \(error.localizedDescription). The project directory may be missing or inaccessible."
             sourceFiles = [] // Clear list on error
             ErrorLogger.logError(error, message: "Failed to load source files from '\(projectURL.path)'", category: .fileSystem)
+        }
+    }
+    
+    private func loadDataset() async {
+        guard let project = currentProject else {
+            errorMessage = "Cannot load dataset: No project is currently loaded"
+            ErrorLogger.log("Attempted to load dataset but no project is loaded", severity: .warning, category: .fileSystem)
+            return
+        }
+        
+        let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
+        let datasetPath = projectURL.appendingPathComponent("data/optimized_finetune_dataset.jsonl")
+        
+        // Check if dataset file exists
+        guard FileManager.default.fileExists(atPath: datasetPath.path) else {
+            // No dataset yet - this is normal if step hasn't been executed
+            datasetEntries = []
+            datasetStatistics = nil
+            return
+        }
+        
+        do {
+            // Get file size
+            let attributes = try FileManager.default.attributesOfItem(atPath: datasetPath.path)
+            let fileSize = attributes[.size] as? Int64 ?? 0
+            let fileSizeString = ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
+            
+            // Read and parse JSONL file
+            let content = try String(contentsOf: datasetPath, encoding: .utf8)
+            let lines = content.components(separatedBy: .newlines).filter { $0.isEmpty == false }
+            
+            var entries: [[String: String]] = []
+            for line in lines {
+                if let data = line.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
+                    entries.append(json)
+                }
+            }
+            
+            datasetEntries = entries
+            datasetStatistics = (total: entries.count, fileSize: fileSizeString)
+            errorMessage = nil
+            
+            ErrorLogger.log("Successfully loaded dataset with \(entries.count) entries", severity: .info, category: .fileSystem)
+        } catch {
+            errorMessage = "Failed to load dataset from '\(datasetPath.path)': \(error.localizedDescription)"
+            datasetEntries = []
+            datasetStatistics = nil
+            ErrorLogger.logError(error, message: "Failed to load dataset from '\(datasetPath.path)'", category: .fileSystem)
         }
     }
     

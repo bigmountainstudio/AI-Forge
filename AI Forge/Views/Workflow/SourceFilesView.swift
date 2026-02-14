@@ -143,7 +143,25 @@ struct SourceFilesView: View {
                 .accessibilityLabel("Add more code examples")
             }
             .padding(.top, 8)
+            
+            Divider()
+                .padding(.vertical, 8)
+            
+            Button {
+                openProjectDirectory()
+            } label: {
+                Label("Open Project Directory", systemImage: "folder")
+            }
+            .buttonStyle(.bordered)
+            .accessibilityLabel("Open project directory in Finder")
+            .accessibilityHint("Opens the project folder to view all source files")
         }
+    }
+    
+    private func openProjectDirectory() {
+        guard let project = observable.currentProject else { return }
+        let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
+        NSWorkspace.shared.open(projectURL)
     }
     
     private func categorySection(title: String, files: [SourceFileReference], icon: String) -> some View {
