@@ -70,21 +70,11 @@ struct DatasetView: View {
                     
                     // Dataset Entries List
                     if observable.datasetEntries.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "doc.text.magnifyingglass")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.secondary)
-                            
-                            Text("No dataset found")
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
-                            
-                            Text("Execute this step to generate the optimized dataset")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(40)
+                        ContentUnavailableView(
+                            "No dataset found",
+                            systemImage: "doc.text.magnifyingglass",
+                            description: Text("Execute this step to generate the optimized dataset")
+                        )
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 12) {

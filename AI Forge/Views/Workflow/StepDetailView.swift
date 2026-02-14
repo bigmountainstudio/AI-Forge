@@ -14,18 +14,56 @@ struct StepDetailView: View {
         ScrollView {
             VStack(alignment: .leading) {
                 // Step header
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(step.title)
-                        .font(.title)
+                HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(step.title)
+                            .font(.title)
+                        
+                        Text(step.stepDescription)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
                     
-                    Text(step.stepDescription)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                    Spacer()
+                    
+                    // Action buttons
+                    if let observable = stepObservable {
+                        HStack {
+                            if step.status == .pending || step.status == .failed || step.status == .completed {
+                                Button(step.status == .completed ? "Re-Execute Step" : "Execute Step", systemImage: "play.circle") {
+                                    Task {
+                                        await observable.executeStep()
+                                    }
+                                }
+                                .disabled(observable.isExecuting)
+                                .accessibilityLabel(step.status == .completed ? "Re-execute step" : "Execute step")
+                                .accessibilityHint("Runs the Python script for this workflow step")
+                            }
+                            
+                            if observable.isExecuting {
+                                Button("Cancel", systemImage: "stop.circle") {
+                                    Task {
+                                        await observable.cancelExecution()
+                                    }
+                                }
+                                .accessibilityLabel("Cancel execution")
+                                .accessibilityHint("Stops the currently running script")
+                                
+                                ProgressView()
+                                    .padding(.leading)
+                                    .accessibilityLabel("Executing step")
+                            }
+                        }
+                        .padding()
+                        .animation(.easeInOut(duration: 0.3), value: observable.isExecuting)
+                        .animation(.easeInOut(duration: 0.3), value: step.status)
+                    }
                 }
                 
                 // Step-specific content
                 if let observable = stepObservable {
                     stepContent(for: step.stepNumber, observable: observable)
+                        .padding()
                 }
                 
                 // Execution output
@@ -62,53 +100,6 @@ struct StepDetailView: View {
                     .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
                     .padding(.horizontal)
                     .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-                
-                // Action buttons
-                if let observable = stepObservable {
-                    HStack {
-                        if step.status == .failed {
-                            Button("Retry") {
-                                Task {
-                                    await observable.executeStep()
-                                }
-                            }
-                            .accessibilityLabel("Retry step")
-                            .accessibilityHint("Attempts to execute the failed step again")
-                            .transition(.scale.combined(with: .opacity))
-                        }
-                        
-                        if step.status == .pending || step.status == .failed || step.status == .completed {
-                            Button(step.status == .completed ? "Re-Execute Step" : "Execute Step") {
-                                Task {
-                                    await observable.executeStep()
-                                }
-                            }
-                            .disabled(observable.isExecuting)
-                            .accessibilityLabel(step.status == .completed ? "Re-execute step" : "Execute step")
-                            .accessibilityHint("Runs the Python script for this workflow step")
-                            .opacity(observable.isExecuting ? 0.5 : 1.0)
-                        }
-                        
-                        if observable.isExecuting {
-                            Button("Cancel") {
-                                Task {
-                                    await observable.cancelExecution()
-                                }
-                            }
-                            .accessibilityLabel("Cancel execution")
-                            .accessibilityHint("Stops the currently running script")
-                            .transition(.scale.combined(with: .opacity))
-                            
-                            ProgressView()
-                                .padding(.leading)
-                                .accessibilityLabel("Executing step")
-                                .transition(.opacity)
-                        }
-                    }
-                    .padding()
-                    .animation(.easeInOut(duration: 0.3), value: observable.isExecuting)
-                    .animation(.easeInOut(duration: 0.3), value: step.status)
                 }
             }
             .padding()

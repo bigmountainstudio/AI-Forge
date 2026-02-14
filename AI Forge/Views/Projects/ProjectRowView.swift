@@ -22,10 +22,9 @@ struct ProjectRowView: View {
                 Spacer()
                 
                 ProgressView(value: project.viewProgressPercentage)
-                    .frame(width: 60)
                     .accessibilityLabel("Project progress")
                     .accessibilityValue("\(Int(project.viewProgressPercentage * 100)) percent complete")
-                    .animation(.easeInOut(duration: 0.5), value: project.viewProgressPercentage)
+                    .animation(.easeInOut, value: project.viewProgressPercentage)
             }
         }
         .padding(.vertical, 4)

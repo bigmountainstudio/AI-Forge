@@ -69,36 +69,25 @@ struct SourceFilesView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "doc.badge.plus")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-                .symbolEffect(.pulse)
-            
-            Text("No Source Files")
-                .font(.headline)
-            
-            Text("Add API documentation and code examples to begin")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        VStack {
+            ContentUnavailableView(
+                "No Source Files",
+                systemImage: "doc.badge.plus",
+                description: Text("Add API documentation and code examples to begin")
+            )
             
             HStack(spacing: 12) {
-                Button {
+                Button("Add API Docs", systemImage: "doc.text") {
                     selectedPickerCategory = .apiDocumentation
                     showingFilePicker = true
-                } label: {
-                    Label("Add API Docs", systemImage: "doc.text")
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Add API Documentation")
                 .accessibilityHint("Opens a file picker to select API documentation files or folders")
                 
-                Button {
+                Button("Add Examples", systemImage: "chevron.left.forwardslash.chevron.right") {
                     selectedPickerCategory = .codeExamples
                     showingFilePicker = true
-                } label: {
-                    Label("Add Examples", systemImage: "chevron.left.forwardslash.chevron.right")
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Add Code Examples")
@@ -124,20 +113,16 @@ struct SourceFilesView: View {
             }
             
             HStack(spacing: 12) {
-                Button {
+                Button("Add API Docs", systemImage: "plus") {
                     selectedPickerCategory = .apiDocumentation
                     showingFilePicker = true
-                } label: {
-                    Label("Add API Docs", systemImage: "plus")
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Add more API documentation")
                 
-                Button {
+                Button("Add Examples", systemImage: "plus") {
                     selectedPickerCategory = .codeExamples
                     showingFilePicker = true
-                } label: {
-                    Label("Add Examples", systemImage: "plus")
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Add more code examples")
@@ -145,12 +130,9 @@ struct SourceFilesView: View {
             .padding(.top, 8)
             
             Divider()
-                .padding(.vertical, 8)
             
-            Button {
+            Button("Open Project Folder", systemImage: "folder") {
                 openProjectDirectory()
-            } label: {
-                Label("Open Project Folder", systemImage: "folder")
             }
             .buttonStyle(.bordered)
             .accessibilityLabel("Open project directory in Finder")
