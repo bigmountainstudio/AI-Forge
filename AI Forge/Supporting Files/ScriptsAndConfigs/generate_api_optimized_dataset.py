@@ -330,9 +330,10 @@ def save_datasets(dataset: List[dict], output_dir: Path, train_ratio: float = 0.
 
 
 def main() -> None:
-    script_dir = Path(__file__).parent
-    base_dir = script_dir.parent
-    api_dir = script_dir.parent.parent / "api_training_data"
+    # Use current working directory as base (project directory)
+    # The Swift app sets the working directory to the project path
+    base_dir = Path.cwd()
+    api_dir = base_dir.parent / "api_training_data"
     output_dir = base_dir / "data"
 
     print("=" * 60)

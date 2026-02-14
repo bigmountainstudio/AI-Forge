@@ -341,9 +341,9 @@ def save_dataset(dataset: List[Dict[str, str]], output_dir: Path,
 def main():
     """Main function to generate fine-tuning dataset from code examples"""
     
-    # Paths
-    script_dir = Path(__file__).parent
-    base_dir = script_dir.parent  # FineTuning directory
+    # Paths - use current working directory (project directory)
+    # The Swift app sets the working directory to the project path
+    base_dir = Path.cwd()
     code_examples_dir = base_dir / "code_examples"
     output_dir = base_dir / "data"
     
