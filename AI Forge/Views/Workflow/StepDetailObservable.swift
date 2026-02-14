@@ -49,6 +49,8 @@ final class StepDetailObservable {
             await loadDataset()
         case 3:
             configuration = project.configuration
+        case 4:
+            configuration = project.configuration
         default:
             break
         }
@@ -251,6 +253,34 @@ final class StepDetailObservable {
             if isValid == false {
                 errorMessage = validationError
                 ErrorLogger.log("Step completion validation failed: \(validationError ?? "Unknown error")", severity: .warning, category: .workflow)
+                return
+            }
+        }
+        
+        // Step 3 (Configuration) requires configuration to be saved, then mark complete
+        if step.stepNumber == 3 {
+            guard let config = configuration else {
+                errorMessage = "No configuration available. Please set configuration parameters first."
+                return
+            }
+            
+            do {
+                // Save the configuration
+                await updateConfiguration(config)
+                
+                // Check if configuration save was successful
+                if errorMessage != nil {
+                    return
+                }
+                
+                // Mark step as complete
+                try workflowEngine.markStepComplete(step)
+                executionOutput = "Configuration saved successfully."
+                ErrorLogger.log("Configuration step completed for project '\(project.name)'", severity: .info, category: .workflow)
+                return
+            } catch {
+                errorMessage = "Failed to complete configuration step: \(error.localizedDescription)"
+                ErrorLogger.logError(error, message: "Failed to complete configuration for step '\(step.title)'", category: .database)
                 return
             }
         }

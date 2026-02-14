@@ -150,6 +150,8 @@ struct StepDetailView: View {
             DatasetView(observable: observable)
         case 3:
             ConfigurationView(observable: observable)
+        case 4:
+            RunFineTuningView(observable: observable)
         default:
             EmptyView()
         }

@@ -20,8 +20,6 @@ struct ConfigurationView: View {
     @State private var showingBatchSizeInfo = false
     @State private var showingEpochsInfo = false
     @State private var showingOutputDirInfo = false
-    @State private var isSaving = false
-    @State private var showingSaveSuccess = false
     
     init(observable: StepDetailObservable) {
         self.observable = observable
@@ -50,19 +48,6 @@ struct ConfigurationView: View {
                     showingEpochsInfo: $showingEpochsInfo,
                     showingOutputDirInfo: $showingOutputDirInfo
                 )
-                
-                HStack {
-                    Spacer()
-                    
-                    Button(isSaving ? "Saving..." : "Save Configuration") {
-                        saveConfiguration()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(modelName.isEmpty || isSaving)
-                    .accessibilityLabel("Save configuration")
-                    .accessibilityHint("Saves the fine-tuning configuration and marks this step as complete")
-                }
-                .padding()
             }
         )
     }
@@ -111,11 +96,6 @@ struct ConfigurationView: View {
             } message: {
                 Text("Directory where fine-tuned model checkpoints and the final model will be saved. Choose a location with sufficient storage space (models can be several GB). The directory will be created if it doesn't exist.")
             }
-            .alert("Configuration Saved", isPresented: $showingSaveSuccess) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Your configuration has been saved successfully.")
-            }
 
     }
     
@@ -137,51 +117,7 @@ struct ConfigurationView: View {
             datasetPath = defaultDatasetPath
         }
     }
-    
-    private func saveConfiguration() {
-        validationErrors = []
-        
-        // Validate inputs
-        guard modelName.isEmpty == false else {
-            validationErrors.append("Model name is required")
-            return
-        }
-        
-        guard let learningRateValue = Double(learningRate), learningRateValue > 0 else {
-            validationErrors.append("Learning rate must be a positive number")
-            return
-        }
-        
-        guard batchSize > 0 else {
-            validationErrors.append("Batch size must be greater than 0")
-            return
-        }
-        
-        guard numberOfEpochs > 0 else {
-            validationErrors.append("Number of epochs must be greater than 0")
-            return
-        }
-        
-        // Create or update configuration
-        let config = observable.configuration ?? FineTuningConfigurationModel()
-        config.modelName = modelName
-        config.learningRate = learningRateValue
-        config.batchSize = batchSize
-        config.numberOfEpochs = numberOfEpochs
-        config.outputDirectory = outputDirectory
-        config.datasetPath = datasetPath
-        
-        isSaving = true
-        Task {
-            await observable.updateConfiguration(config)
-            isSaving = false
-            
-            // Only show success if there was no error
-            if observable.errorMessage == nil {
-                showingSaveSuccess = true
-            }
-        }
-    }
+
 }
 
 #Preview("Normal State") {
