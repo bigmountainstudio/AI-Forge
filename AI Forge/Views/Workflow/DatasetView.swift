@@ -185,7 +185,11 @@ struct DatasetEntryRow: View {
     }
 }
 
-#Preview {
+#Preview("With No Data") {
+    
+}
+
+#Preview("With Data") {
     let fileSystemManager = FileSystemManager()
     let pythonExecutor = PythonScriptExecutor()
     let workflowEngine = WorkflowEngineObservable(

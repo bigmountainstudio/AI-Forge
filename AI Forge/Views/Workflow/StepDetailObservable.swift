@@ -336,7 +336,7 @@ final class StepDetailObservable {
         }
         
         let projectURL = URL(fileURLWithPath: project.projectDirectoryPath)
-        let datasetPath = projectURL.appendingPathComponent("data/optimized_finetune_dataset.jsonl")
+        let datasetPath = projectURL.appendingPathComponent("data/unified_finetune_dataset.jsonl")
         
         // Check if dataset file exists
         guard FileManager.default.fileExists(atPath: datasetPath.path) else {
@@ -359,8 +359,16 @@ final class StepDetailObservable {
             var entries: [[String: String]] = []
             for line in lines {
                 if let data = line.data(using: .utf8),
-                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
-                    entries.append(json)
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    var stringDict: [String: String] = [:]
+                    for (key, value) in json {
+                        if let stringValue = value as? String {
+                            stringDict[key] = stringValue
+                        } else {
+                            stringDict[key] = String(describing: value)
+                        }
+                    }
+                    entries.append(stringDict)
                 }
             }
             

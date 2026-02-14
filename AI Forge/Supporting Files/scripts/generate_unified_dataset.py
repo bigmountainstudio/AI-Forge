@@ -602,8 +602,8 @@ def save_unified_datasets(dataset: List[Dict[str, str]], output_dir: Path,
 def main() -> None:
     """Generate unified dataset from API definitions and code examples."""
     
-    script_dir = Path(__file__).parent
-    base_dir = script_dir.parent
+    # Use current working directory as base (project directory)
+    base_dir = Path.cwd()
     api_dir = base_dir.parent / "api_training_data"
     code_examples_dir = base_dir / "code_examples"
     output_dir = base_dir / "data"
