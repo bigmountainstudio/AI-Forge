@@ -11,16 +11,13 @@ struct ConfigurationFormView: View {
     @Binding var batchSize: Int
     @Binding var numberOfEpochs: Int
     @Binding var outputDirectory: String
-    @Binding var datasetPath: String
     @Binding var validationErrors: [String]
     @Binding var showingOutputPicker: Bool
-    @Binding var showingDatasetPicker: Bool
     @Binding var showingModelNameInfo: Bool
     @Binding var showingLearningRateInfo: Bool
     @Binding var showingBatchSizeInfo: Bool
     @Binding var showingEpochsInfo: Bool
     @Binding var showingOutputDirInfo: Bool
-    @Binding var showingDatasetPathInfo: Bool
     
     @State private var modelSelection: String = ""
     let modelOptions = ["qwen2.5-coder:7b", "qwen2.5-coder:32b", "qwen3-coder:30b", "Other"]
@@ -138,31 +135,6 @@ struct ConfigurationFormView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Output directory information")
                     .accessibilityHint("Tap to learn more about the output directory")
-                }
-                
-                HStack {
-                    TextField("Dataset Path", text: $datasetPath)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Dataset path")
-                        .accessibilityHint("Path to the training dataset file")
-                    
-                    Button {
-                        showingDatasetPicker = true
-                    } label: {
-                        Image(systemName: "doc")
-                    }
-                    .accessibilityLabel("Choose dataset file")
-                    .accessibilityHint("Opens a file picker")
-                    
-                    Button {
-                        showingDatasetPathInfo = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Dataset path information")
-                    .accessibilityHint("Tap to learn more about the dataset path")
                 }
             }
             
