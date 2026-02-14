@@ -150,7 +150,7 @@ struct SourceFilesView: View {
             Button {
                 openProjectDirectory()
             } label: {
-                Label("Open Project Directory", systemImage: "folder")
+                Label("Open Project Folder", systemImage: "folder")
             }
             .buttonStyle(.bordered)
             .accessibilityLabel("Open project directory in Finder")

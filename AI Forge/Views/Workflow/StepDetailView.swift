@@ -79,13 +79,13 @@ struct StepDetailView: View {
                         }
                         
                         if step.status == .pending || step.status == .failed || step.status == .completed {
-                            Button(step.status == .completed ? "Re-run Step" : "Execute Step") {
+                            Button(step.status == .completed ? "Re-Execute Step" : "Execute Step") {
                                 Task {
                                     await observable.executeStep()
                                 }
                             }
                             .disabled(observable.isExecuting)
-                            .accessibilityLabel(step.status == .completed ? "Re-run step" : "Execute step")
+                            .accessibilityLabel(step.status == .completed ? "Re-execute step" : "Execute step")
                             .accessibilityHint("Runs the Python script for this workflow step")
                             .opacity(observable.isExecuting ? 0.5 : 1.0)
                         }
@@ -123,6 +123,11 @@ struct StepDetailView: View {
                     fileSystemManager: fileSystemManager,
                     pythonExecutor: pythonExecutor
                 )
+                
+                // Set loading state immediately for dataset step
+                if step.stepNumber == 2 {
+                    stepObservable?.isLoadingDataset = true
+                }
                 
                 Task {
                     await stepObservable?.loadStep(step, project: project)

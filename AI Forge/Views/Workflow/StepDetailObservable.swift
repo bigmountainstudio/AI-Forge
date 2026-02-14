@@ -17,6 +17,7 @@ final class StepDetailObservable {
     var datasetStatistics: (total: Int, fileSize: String)?
     var executionOutput: String = ""
     var isExecuting = false
+    var isLoadingDataset = false
     var errorMessage: String?
     
     init(workflowEngine: WorkflowEngineObservable,
@@ -28,6 +29,9 @@ final class StepDetailObservable {
     }
     
     func loadStep(_ step: WorkflowStepModel, project: ProjectModel) async {
+        isLoadingDataset = true
+        defer { isLoadingDataset = false }
+        
         currentStep = step
         currentProject = project
         

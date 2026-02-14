@@ -13,6 +13,7 @@ struct DatasetView: View {
         if searchText.isEmpty {
             return observable.datasetEntries
         }
+        
         return observable.datasetEntries.filter { entry in
             let instruction = entry["instruction"] ?? ""
             let output = entry["output"] ?? ""
@@ -22,57 +23,80 @@ struct DatasetView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Dataset Statistics
-            if let stats = observable.datasetStatistics {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Dataset Statistics")
-                        .font(.headline)
-                    
-                    HStack(spacing: 24) {
-                        StatItem(label: "Total Examples", value: "\(stats.total)")
-                        StatItem(label: "File Size", value: stats.fileSize)
-                    }
-                }
-                .padding()
-                .background(.regularMaterial, in: .rect(cornerRadius: 8))
-            }
-            
-            // Search Bar
-            if observable.datasetEntries.isEmpty == false {
-                TextField("Search examples...", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Search dataset")
-                    .accessibilityHint("Filter examples by instruction or output content")
-            }
-            
-            // Dataset Entries List
-            if observable.datasetEntries.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("No dataset found")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                    
-                    Text("Execute this step to generate the optimized dataset")
+        Group {
+            if observable.isLoadingDataset {
+                VStack {
+                    ProgressView("Loading dataset...")
+                        .progressViewStyle(.circular)
+                    Text("Parsing JSONL file contents")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(40)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(Array(filteredEntries.enumerated()), id: \.offset) { index, entry in
-                            DatasetEntryRow(
-                                entry: entry,
-                                index: index,
-                                isExpanded: expandedRows.contains(index)
-                            ) {
-                                toggleExpansion(for: index)
+                VStack(alignment: .leading, spacing: 16) {
+                    // Dataset Statistics
+                    if let stats = observable.datasetStatistics {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Dataset Statistics")
+                                    .font(.headline)
+                                
+                                HStack(spacing: 24) {
+                                    StatItem(label: "Total Examples", value: "\(stats.total)")
+                                    StatItem(label: "File Size", value: stats.fileSize)
+                                }
+                            }
+                            .padding()
+                            .background(.regularMaterial, in: .rect(cornerRadius: 8))
+                            
+                            Spacer()
+                            
+                            Button("Open Dataset Folder", systemImage: "folder") {
+                                guard let project = observable.currentProject else { return }
+                                let dataFolderURL = URL(fileURLWithPath: project.projectDirectoryPath).appendingPathComponent("data")
+                                NSWorkspace.shared.open(dataFolderURL)
+                            }
+                        }
+                    }
+                    
+                    // Search Bar
+                    if observable.datasetEntries.isEmpty == false {
+                        TextField("Search examples...", text: $searchText)
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Search dataset")
+                            .accessibilityHint("Filter examples by instruction or output content")
+                    }
+                    
+                    // Dataset Entries List
+                    if observable.datasetEntries.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.secondary)
+                            
+                            Text("No dataset found")
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                            
+                            Text("Execute this step to generate the optimized dataset")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(40)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(Array(filteredEntries.enumerated()), id: \.offset) { index, entry in
+                                    DatasetEntryRow(
+                                        entry: entry,
+                                        index: index,
+                                        isExpanded: expandedRows.contains(index)
+                                    ) {
+                                        toggleExpansion(for: index)
+                                    }
+                                }
                             }
                         }
                     }
@@ -186,7 +210,25 @@ struct DatasetEntryRow: View {
 }
 
 #Preview("With No Data") {
+    let fileSystemManager = FileSystemManager()
+    let pythonExecutor = PythonScriptExecutor()
+    let workflowEngine = WorkflowEngineObservable(
+        modelContext: ProjectModel.preview.mainContext,
+        pythonExecutor: pythonExecutor,
+        fileSystemManager: fileSystemManager
+    )
     
+    let observable = StepDetailObservable(
+        workflowEngine: workflowEngine,
+        fileSystemManager: fileSystemManager,
+        pythonExecutor: pythonExecutor
+    )
+    
+    // No data added - should show empty state
+    observable.datasetEntries = []
+    observable.datasetStatistics = nil
+    
+    return DatasetView(observable: observable)
 }
 
 #Preview("With Data") {
