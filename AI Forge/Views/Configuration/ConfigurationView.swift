@@ -16,15 +16,42 @@ struct ConfigurationView: View {
     @State private var validationErrors: [String] = []
     @State private var showingOutputPicker = false
     @State private var showingDatasetPicker = false
+    @State private var showingModelNameInfo = false
+    @State private var showingLearningRateInfo = false
+    @State private var showingBatchSizeInfo = false
+    @State private var showingEpochsInfo = false
+    @State private var showingOutputDirInfo = false
+    @State private var showingDatasetPathInfo = false
+    
+    init(observable: StepDetailObservable) {
+        self.observable = observable
+    }
+    
+    init(observable: StepDetailObservable, validationErrors: [String]) {
+        self.observable = observable
+        self._validationErrors = State(initialValue: validationErrors)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Form {
                 Section("Model Configuration") {
-                    TextField("Model Name", text: $modelName)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Model name")
-                        .accessibilityHint("Enter the name of the model to fine-tune")
+                    HStack {
+                        TextField("Model Name", text: $modelName)
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Model name")
+                            .accessibilityHint("Enter the name of the model to fine-tune")
+                        
+                        Button {
+                            showingModelNameInfo = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Model name information")
+                        .accessibilityHint("Tap to learn more about the model name parameter")
+                    }
                     
                     HStack {
                         Text("Learning Rate")
@@ -34,17 +61,51 @@ struct ConfigurationView: View {
                             .frame(width: 120)
                             .accessibilityLabel("Learning rate")
                             .accessibilityHint("Enter the learning rate as a decimal number")
+                        
+                        Button {
+                            showingLearningRateInfo = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Learning rate information")
+                        .accessibilityHint("Tap to learn more about the learning rate parameter")
                     }
                     
-                    Stepper("Batch Size: \(batchSize)", value: $batchSize, in: 1...128)
-                        .accessibilityLabel("Batch size")
-                        .accessibilityValue("\(batchSize)")
-                        .accessibilityHint("Adjust the batch size between 1 and 128")
+                    HStack {
+                        Stepper("Batch Size: \(batchSize)", value: $batchSize, in: 1...128)
+                            .accessibilityLabel("Batch size")
+                            .accessibilityValue("\(batchSize)")
+                            .accessibilityHint("Adjust the batch size between 1 and 128")
+                        
+                        Button {
+                            showingBatchSizeInfo = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Batch size information")
+                        .accessibilityHint("Tap to learn more about the batch size parameter")
+                    }
                     
-                    Stepper("Number of Epochs: \(numberOfEpochs)", value: $numberOfEpochs, in: 1...100)
-                        .accessibilityLabel("Number of epochs")
-                        .accessibilityValue("\(numberOfEpochs)")
-                        .accessibilityHint("Adjust the number of training epochs between 1 and 100")
+                    HStack {
+                        Stepper("Number of Epochs: \(numberOfEpochs)", value: $numberOfEpochs, in: 1...100)
+                            .accessibilityLabel("Number of epochs")
+                            .accessibilityValue("\(numberOfEpochs)")
+                            .accessibilityHint("Adjust the number of training epochs between 1 and 100")
+                        
+                        Button {
+                            showingEpochsInfo = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Number of epochs information")
+                        .accessibilityHint("Tap to learn more about the epochs parameter")
+                    }
                 }
                 
                 Section("Paths") {
@@ -61,6 +122,16 @@ struct ConfigurationView: View {
                         }
                         .accessibilityLabel("Choose output directory")
                         .accessibilityHint("Opens a folder picker")
+                        
+                        Button {
+                            showingOutputDirInfo = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Output directory information")
+                        .accessibilityHint("Tap to learn more about the output directory")
                     }
                     
                     HStack {
@@ -76,6 +147,16 @@ struct ConfigurationView: View {
                         }
                         .accessibilityLabel("Choose dataset file")
                         .accessibilityHint("Opens a file picker")
+                        
+                        Button {
+                            showingDatasetPathInfo = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Dataset path information")
+                        .accessibilityHint("Tap to learn more about the dataset path")
                     }
                 }
                 
@@ -97,7 +178,6 @@ struct ConfigurationView: View {
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
@@ -116,7 +196,6 @@ struct ConfigurationView: View {
             }
             .padding()
         }
-        .padding()
         .fileImporter(
             isPresented: $showingOutputPicker,
             allowedContentTypes: [.folder]
@@ -141,6 +220,36 @@ struct ConfigurationView: View {
         }
         .onAppear {
             loadConfiguration()
+        }
+        .alert("Model Name", isPresented: $showingModelNameInfo) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("The identifier or name of the base language model to fine-tune. Examples: 'qwen2.5-coder:7b', 'llama-2-7b-chat'. This determines the starting point for your fine-tuning.")
+        }
+        .alert("Learning Rate", isPresented: $showingLearningRateInfo) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Controls how much the model's weights are updated during training. Lower values (like 0.0001) mean slower but more stable learning. Higher values learn faster but may be unstable. Typical range: 0.00001 to 0.001.")
+        }
+        .alert("Batch Size", isPresented: $showingBatchSizeInfo) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Number of training examples processed together in one forward/backward pass. Larger batches provide more stable gradients but require more memory. Smaller batches can fit better on limited hardware. Typical range: 1-32 for consumer GPUs.")
+        }
+        .alert("Number of Epochs", isPresented: $showingEpochsInfo) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("How many times the model sees the entire training dataset. More epochs can improve learning but risk overfitting. Start with 3-5 epochs and evaluate performance. You can always continue training later.")
+        }
+        .alert("Output Directory", isPresented: $showingOutputDirInfo) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Directory where fine-tuned model checkpoints and the final model will be saved. Choose a location with sufficient storage space (models can be several GB). The directory will be created if it doesn't exist.")
+        }
+        .alert("Dataset Path", isPresented: $showingDatasetPathInfo) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Path to the training dataset file in JSONL format. This file contains instruction-tuning examples with 'instruction', 'input', and 'output' fields. Generated by the dataset creation scripts in the workflow.")
         }
     }
     
@@ -199,7 +308,7 @@ struct ConfigurationView: View {
     }
 }
 
-#Preview {
+#Preview("Normal State") {
     let fileSystemManager = FileSystemManager()
     let pythonExecutor = PythonScriptExecutor()
     let workflowEngine = WorkflowEngineObservable(
@@ -215,4 +324,22 @@ struct ConfigurationView: View {
     )
     
     ConfigurationView(observable: observable)
+}
+
+#Preview("Error State") {
+    let fileSystemManager = FileSystemManager()
+    let pythonExecutor = PythonScriptExecutor()
+    let workflowEngine = WorkflowEngineObservable(
+        modelContext: ProjectModel.preview.mainContext,
+        pythonExecutor: pythonExecutor,
+        fileSystemManager: fileSystemManager
+    )
+    
+    let observable = StepDetailObservable(
+        workflowEngine: workflowEngine,
+        fileSystemManager: fileSystemManager,
+        pythonExecutor: pythonExecutor
+    )
+    
+    ConfigurationView(observable: observable, validationErrors: ["Model name is required", "Learning rate must be a positive number"])
 }
