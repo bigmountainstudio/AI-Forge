@@ -28,11 +28,12 @@ final class FineTuningConfigurationModel {
     var outputDirectory: String
     var datasetPath: String
     var additionalParameters: [String: String]
+    var datasetSize: Int = 0  // Number of training examples
     
     init() {
         self.modelName = ""
         self.learningRate = 0.0001
-        self.batchSize = 8
+        self.batchSize = 16
         self.numberOfEpochs = 3
         self.outputDirectory = ""
         self.datasetPath = ""
@@ -65,6 +66,42 @@ extension FineTuningConfigurationModel {
     }
 }
 
+// MARK: - Training Estimation
+extension FineTuningConfigurationModel {
+    /// Calculates total number of training steps
+    var totalSteps: Int {
+        guard datasetSize > 0, batchSize > 0 else { return 0 }
+        return (datasetSize / batchSize) * numberOfEpochs
+    }
+    
+    /// Estimates training time in seconds (conservative and optimistic)
+    /// Returns (conservative, optimistic) time estimates in seconds
+    func estimatedTrainingTime() -> (conservative: TimeInterval, optimistic: TimeInterval) {
+        let steps = totalSteps
+        guard steps > 0 else { return (0, 0) }
+        
+        // 10 seconds per step (conservative), 5 seconds per step (optimistic)
+        let conservative = Double(steps) * 10.0
+        let optimistic = Double(steps) * 5.0
+        
+        return (conservative, optimistic)
+    }
+    
+    /// Formats time interval into human-readable string
+    static func formatTimeEstimate(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        
+        if hours > 0 {
+            return "~\(hours)h \(minutes)m"
+        } else if minutes > 0 {
+            return "~\(minutes) minutes"
+        } else {
+            return "~\(Int(seconds)) seconds"
+        }
+    }
+}
+
 // MARK: - Preview Helpers
 extension FineTuningConfigurationModel {
     static let mock: FineTuningConfigurationModel = {
@@ -73,6 +110,7 @@ extension FineTuningConfigurationModel {
         config.learningRate = 0.0001
         config.batchSize = 8
         config.numberOfEpochs = 3
+        config.datasetSize = 1600
         return config
     }()
 }

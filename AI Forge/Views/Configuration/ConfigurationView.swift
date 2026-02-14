@@ -7,9 +7,9 @@ import SwiftData
 struct ConfigurationView: View {
     @Bindable var observable: StepDetailObservable
     
-    @State private var modelName: String = ""
-    @State private var learningRate: String = ""
-    @State private var batchSize: Int = 8
+    @State private var modelName: String = "qwen2.5-coder:7b"
+    @State private var learningRate: String = "0.0001"
+    @State private var batchSize: Int = 16
     @State private var numberOfEpochs: Int = 3
     @State private var outputDirectory: String = ""
     @State private var datasetPath: String = ""
@@ -20,6 +20,8 @@ struct ConfigurationView: View {
     @State private var showingBatchSizeInfo = false
     @State private var showingEpochsInfo = false
     @State private var showingOutputDirInfo = false
+    @State private var isSaving = false
+    @State private var showingSaveSuccess = false
     
     init(observable: StepDetailObservable) {
         self.observable = observable
@@ -52,11 +54,11 @@ struct ConfigurationView: View {
                 HStack {
                     Spacer()
                     
-                    Button("Save Configuration") {
+                    Button(isSaving ? "Saving..." : "Save Configuration") {
                         saveConfiguration()
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(modelName.isEmpty)
+                    .disabled(modelName.isEmpty || isSaving)
                     .accessibilityLabel("Save configuration")
                     .accessibilityHint("Saves the fine-tuning configuration and marks this step as complete")
                 }
@@ -79,6 +81,9 @@ struct ConfigurationView: View {
                 }
             }
             .onAppear {
+                loadConfiguration()
+            }
+            .onChange(of: observable.configuration) {
                 loadConfiguration()
             }
             .alert("Model Name", isPresented: $showingModelNameInfo) {
@@ -106,6 +111,11 @@ struct ConfigurationView: View {
             } message: {
                 Text("Directory where fine-tuned model checkpoints and the final model will be saved. Choose a location with sufficient storage space (models can be several GB). The directory will be created if it doesn't exist.")
             }
+            .alert("Configuration Saved", isPresented: $showingSaveSuccess) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Your configuration has been saved successfully.")
+            }
 
     }
     
@@ -117,12 +127,8 @@ struct ConfigurationView: View {
             numberOfEpochs = config.numberOfEpochs
             outputDirectory = config.outputDirectory
             datasetPath = config.datasetPath
-        } else {
-            // Set defaults
-            learningRate = "0.0001"
-            batchSize = 8
-            numberOfEpochs = 3
         }
+        // Otherwise keep the defaults initialized in @State
         
         // Auto-populate dataset path from Step 2 output if not already set
         if datasetPath.isEmpty, let project = observable.currentProject {
@@ -165,8 +171,15 @@ struct ConfigurationView: View {
         config.outputDirectory = outputDirectory
         config.datasetPath = datasetPath
         
+        isSaving = true
         Task {
             await observable.updateConfiguration(config)
+            isSaving = false
+            
+            // Only show success if there was no error
+            if observable.errorMessage == nil {
+                showingSaveSuccess = true
+            }
         }
     }
 }

@@ -1,7 +1,6 @@
 // Copyright ©2026 Big Mountain Studio. All rights reserved. X: @BigMtnStudio
 
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ConfigurationFormView: View {
     @Bindable var observable: StepDetailObservable
@@ -19,7 +18,7 @@ struct ConfigurationFormView: View {
     @Binding var showingEpochsInfo: Bool
     @Binding var showingOutputDirInfo: Bool
     
-    @State private var modelSelection: String = ""
+    @State private var modelSelection: String = "qwen2.5-coder:7b"
     let modelOptions = ["qwen2.5-coder:7b", "qwen2.5-coder:32b", "qwen3-coder:30b", "Other"]
     
     var body: some View {
@@ -28,7 +27,8 @@ struct ConfigurationFormView: View {
                 HStack {
                     Picker("Model Name", selection: $modelSelection) {
                         ForEach(modelOptions, id: \.self) { option in
-                            Text(option).tag(option)
+                            Text(option)
+                                .tag(option)
                         }
                     }
                     .pickerStyle(.menu)
@@ -77,7 +77,13 @@ struct ConfigurationFormView: View {
                 }
                 
                 HStack {
-                    Stepper("Batch Size: \(batchSize)", value: $batchSize, in: 1...128)
+                    Text("Batch Size")
+                    Spacer()
+                    Text("\(batchSize)")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                    Stepper("", value: $batchSize, in: 1...128)
+                        .labelsHidden()
                         .accessibilityLabel("Batch size")
                         .accessibilityValue("\(batchSize)")
                         .accessibilityHint("Adjust the batch size between 1 and 128")
@@ -94,7 +100,13 @@ struct ConfigurationFormView: View {
                 }
                 
                 HStack {
-                    Stepper("Number of Epochs: \(numberOfEpochs)", value: $numberOfEpochs, in: 1...100)
+                    Text("Number of Epochs")
+                    Spacer()
+                    Text("\(numberOfEpochs)")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                    Stepper("", value: $numberOfEpochs, in: 1...100)
+                        .labelsHidden()
                         .accessibilityLabel("Number of epochs")
                         .accessibilityValue("\(numberOfEpochs)")
                         .accessibilityHint("Adjust the number of training epochs between 1 and 100")
@@ -138,6 +150,40 @@ struct ConfigurationFormView: View {
                 }
             }
             
+            // Training Time Estimate Section
+            if let config = observable.configuration, config.datasetSize > 0 {
+                Section("Estimated Training Time") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Total Steps", systemImage: "number")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text("\(config.totalSteps)")
+                                .monospacedDigit()
+                                .fontWeight(.medium)
+                        }
+                        
+                        let (conservative, optimistic) = config.estimatedTrainingTime()
+                        
+                        HStack {
+                            Label("Time Range", systemImage: "clock")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text("\(FineTuningConfigurationModel.formatTimeEstimate(optimistic)) - \(FineTuningConfigurationModel.formatTimeEstimate(conservative))")
+                                .monospacedDigit()
+                                .fontWeight(.medium)
+                        }
+                        
+                        Text("Estimate based on dataset size of \(config.datasetSize) examples. Actual time will be calculated after first 10-20 steps.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Estimated training time: \(config.totalSteps) steps, \(FineTuningConfigurationModel.formatTimeEstimate(config.estimatedTrainingTime().optimistic)) to \(FineTuningConfigurationModel.formatTimeEstimate(config.estimatedTrainingTime().conservative))")
+            }
+            
             if validationErrors.isEmpty == false {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
@@ -161,7 +207,10 @@ struct ConfigurationFormView: View {
         }
         .formStyle(.grouped)
         .onAppear {
-            if modelOptions.contains(modelName) {
+            if modelName.isEmpty {
+                modelSelection = "qwen2.5-coder:7b"
+                modelName = "qwen2.5-coder:7b"
+            } else if modelOptions.contains(modelName) {
                 modelSelection = modelName
             } else {
                 modelSelection = "Other"
@@ -172,9 +221,15 @@ struct ConfigurationFormView: View {
                 modelName = newValue
             }
         }
+        .onChange(of: batchSize) { oldValue, newValue in
+            // Update configuration dataset size when batch size changes
+            // This triggers re-calculation of time estimates
+            observable.configuration?.batchSize = newValue
+        }
+        .onChange(of: numberOfEpochs) { oldValue, newValue in
+            // Update configuration epochs when value changes
+            // This triggers re-calculation of time estimates
+            observable.configuration?.numberOfEpochs = newValue
+        }
     }
-}
-
-#Preview {
-    
 }

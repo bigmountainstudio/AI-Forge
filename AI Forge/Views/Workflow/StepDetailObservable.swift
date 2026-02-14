@@ -20,6 +20,12 @@ final class StepDetailObservable {
     var isLoadingDataset = false
     var errorMessage: String?
     
+    // Training progress tracking
+    var currentTrainingStep: Int = 0
+    var totalTrainingSteps: Int = 0
+    var trainingStartTime: Date?
+    var estimatedTimeRemaining: TimeInterval?
+    
     init(workflowEngine: WorkflowEngineObservable,
          fileSystemManager: FileSystemManager,
          pythonExecutor: PythonScriptExecutor) {
@@ -186,7 +192,43 @@ final class StepDetailObservable {
     }
     
     func updateConfiguration(_ config: FineTuningConfigurationModel) async {
-        configuration = config
+        // Update dataset size from loaded dataset if available
+        if let stats = datasetStatistics {
+            config.datasetSize = stats.total
+        }
+        
+        guard let currentProject = currentProject else {
+            errorMessage = "Cannot update configuration: No project is currently loaded"
+            return
+        }
+        
+        do {
+            // Use workflow engine's method to properly handle context insertion and saving
+            try await workflowEngine.updateConfiguration(config, for: currentProject)
+            
+            // Update local observable property for UI binding
+            configuration = config
+            errorMessage = nil
+        } catch {
+            errorMessage = "Failed to save configuration: \(error.localizedDescription)"
+            ErrorLogger.logError(error, message: "Failed to save configuration", category: .database)
+        }
+    }
+    
+    /// Updates training progress and calculates remaining time
+    func updateTrainingProgress(step: Int, total: Int) {
+        currentTrainingStep = step
+        totalTrainingSteps = total
+        
+        guard let startTime = trainingStartTime, step > 0 else {
+            estimatedTimeRemaining = nil
+            return
+        }
+        
+        let elapsed = Date().timeIntervalSince(startTime)
+        let averageTimePerStep = elapsed / Double(step)
+        let remainingSteps = total - step
+        estimatedTimeRemaining = averageTimePerStep * Double(remainingSteps)
     }
     
     func executeStep() async {
@@ -393,6 +435,17 @@ final class StepDetailObservable {
         let scriptPath = getScriptPath(for: step.stepNumber)
         let arguments = getScriptArguments(for: step.stepNumber, project: project)
         
+        // Initialize training tracking for fine-tuning step
+        if step.stepNumber == 4 {
+            trainingStartTime = Date()
+            currentTrainingStep = 0
+            
+            // Calculate total steps from configuration
+            if let config = configuration {
+                totalTrainingSteps = config.totalSteps
+            }
+        }
+        
         return try await pythonExecutor.executeScript(
             scriptPath: scriptPath,
             arguments: arguments,
@@ -400,6 +453,42 @@ final class StepDetailObservable {
         ) { [weak self] output in
             guard let self = self else { return }
             self.executionOutput += output
+            
+            // Parse training progress for fine-tuning step
+            if step.stepNumber == 4 {
+                self.parseTrainingProgress(from: output)
+            }
+        }
+    }
+    
+    /// Parses training output to extract current step and update progress
+    private func parseTrainingProgress(from output: String) {
+        // Common patterns in training output:
+        // "Step 50/600" or "Step: 50/600"
+        // "Epoch 1/3, Step 50/200"
+        // "[50/600]"
+        
+        let patterns = [
+            #"[Ss]tep[:\s]+(\d+)[/](\d+)"#,
+            #"\[(\d+)[/](\d+)\]"#,
+            #"(\d+)[/](\d+)\s+steps?"#
+        ]
+        
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern),
+               let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)) {
+                
+                if match.numberOfRanges >= 3,
+                   let stepRange = Range(match.range(at: 1), in: output),
+                   let totalRange = Range(match.range(at: 2), in: output),
+                   let currentStep = Int(output[stepRange]),
+                   let totalSteps = Int(output[totalRange]) {
+                    
+                    // Update progress
+                    updateTrainingProgress(step: currentStep, total: totalSteps)
+                    break
+                }
+            }
         }
     }
     

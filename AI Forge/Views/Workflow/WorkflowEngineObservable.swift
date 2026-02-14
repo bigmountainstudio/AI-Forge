@@ -91,6 +91,36 @@ final class WorkflowEngineObservable {
             throw WorkflowError.saveFailed
         }
     }
+    
+    func saveProjectState() async throws {
+        do {
+            try modelContext.save()
+            ErrorLogger.log("Project state saved successfully", severity: .info, category: .database)
+        } catch {
+            ErrorLogger.logCritical(error, message: "Failed to save project state", category: .database)
+            throw WorkflowError.saveFailed
+        }
+    }
+    
+    func updateConfiguration(_ config: FineTuningConfigurationModel, for project: ProjectModel) async throws {
+        // Only insert if this is a different configuration object
+        if project.configuration !== config {
+            modelContext.insert(config)
+        }
+        
+        // Set the configuration on the project
+        project.configuration = config
+        project.updatedAt = Date()
+        
+        // Save to SwiftData
+        do {
+            try modelContext.save()
+            ErrorLogger.log("Configuration updated and saved for project '\(project.name)'", severity: .info, category: .database)
+        } catch {
+            ErrorLogger.logCritical(error, message: "Failed to update configuration for project '\(project.name)'", category: .database)
+            throw WorkflowError.saveFailed
+        }
+    }
 }
 
 enum WorkflowError: Error, LocalizedError {

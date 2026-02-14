@@ -66,6 +66,20 @@ struct StepDetailView: View {
                         .padding()
                 }
                 
+                // Training progress (for fine-tuning step)
+                if let observable = stepObservable, 
+                   step.stepNumber == 4,
+                   observable.isExecuting,
+                   observable.totalTrainingSteps > 0 {
+                    TrainingProgressView(
+                        currentStep: observable.currentTrainingStep,
+                        totalSteps: observable.totalTrainingSteps,
+                        estimatedTimeRemaining: observable.estimatedTimeRemaining
+                    )
+                    .padding(.horizontal)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+                
                 // Execution output
                 if let observable = stepObservable, observable.executionOutput.isEmpty == false {
                     VStack(alignment: .leading, spacing: 8) {
