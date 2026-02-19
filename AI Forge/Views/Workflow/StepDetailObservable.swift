@@ -50,7 +50,13 @@ final class StepDetailObservable {
         case 3:
             configuration = project.configuration
         case 4:
+            // Load dataset statistics to update configuration with dataset size
+            await loadDataset()
             configuration = project.configuration
+            // Update configuration with dataset size from loaded statistics
+            if let config = configuration, let stats = datasetStatistics {
+                config.datasetSize = stats.total
+            }
         default:
             break
         }
@@ -528,7 +534,7 @@ final class StepDetailObservable {
         switch stepNumber {
         case 1: scriptName = "copy_code_examples.py"
         case 2: scriptName = "generate_unified_dataset.py"
-        case 4: scriptName = "generate_optimized_dataset.py"
+        case 4: scriptName = "run_finetuning.py"
         case 5: scriptName = "evaluate_overfitting.sh"
         case 6: scriptName = "convert_to_ollama.sh"
         default: return ""
@@ -565,12 +571,25 @@ final class StepDetailObservable {
         var arguments: [String] = []
         
         if let config = project.configuration {
-            arguments.append(contentsOf: [
-                "--model", config.modelName,
-                "--learning-rate", String(config.learningRate),
-                "--batch-size", String(config.batchSize),
-                "--epochs", String(config.numberOfEpochs)
-            ])
+            // Step 4 (Run Fine-Tuning) needs all configuration parameters
+            if stepNumber == 4 {
+                arguments.append(contentsOf: [
+                    "--model", config.modelName,
+                    "--learning-rate", String(config.learningRate),
+                    "--batch-size", String(config.batchSize),
+                    "--epochs", String(config.numberOfEpochs),
+                    "--output-dir", config.outputDirectory.isEmpty ? "models/" : config.outputDirectory,
+                    "--dataset-path", config.datasetPath.isEmpty ? "data/unified_finetune_dataset.jsonl" : config.datasetPath
+                ])
+            } else {
+                // Other steps may use subset of configuration
+                arguments.append(contentsOf: [
+                    "--model", config.modelName,
+                    "--learning-rate", String(config.learningRate),
+                    "--batch-size", String(config.batchSize),
+                    "--epochs", String(config.numberOfEpochs)
+                ])
+            }
         }
         
         return arguments

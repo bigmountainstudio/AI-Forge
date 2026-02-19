@@ -35,8 +35,8 @@ final class FineTuningConfigurationModel {
         self.learningRate = 0.0001
         self.batchSize = 16
         self.numberOfEpochs = 3
-        self.outputDirectory = ""
-        self.datasetPath = ""
+        self.outputDirectory = "models/"
+        self.datasetPath = "data/unified_finetune_dataset.jsonl"
         self.additionalParameters = [:]
     }
 }

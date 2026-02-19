@@ -5,6 +5,61 @@ import Foundation
 actor PythonScriptExecutor {
     private var currentProcess: Process?
     
+    // MARK: - Python Executable Resolution
+    
+    /// Finds the appropriate Python executable, preferring one with ML packages installed
+    private func findPythonExecutable(workingDirectory: String?) -> URL {
+        // 1. Use system Python (macOS system Python has mlx-lm installed via pip3 install --user)
+        // This is Python 3.9.6 which has better compatibility with ML packages
+        let systemPython = URL(fileURLWithPath: "/usr/bin/python3")
+        if FileManager.default.fileExists(atPath: systemPython.path) {
+            return systemPython
+        }
+        
+        // 2. Fallback: Check for virtual environment in repository/development directory
+        if let resourcePath = Bundle.main.resourcePath {
+            let resourceURL = URL(fileURLWithPath: resourcePath)
+            var searchURL = resourceURL
+            for _ in 0..<5 {  // Search up to 5 levels
+                let venvPath = searchURL
+                    .deletingLastPathComponent()
+                    .appendingPathComponent(".venv")
+                    .appendingPathComponent("bin")
+                    .appendingPathComponent("python")
+                
+                if FileManager.default.fileExists(atPath: venvPath.path) {
+                    return venvPath
+                }
+                searchURL = searchURL.deletingLastPathComponent()
+            }
+        }
+        
+        // 3. Check for virtual environment in working directory
+        if let workDir = workingDirectory {
+            let venvPython = URL(fileURLWithPath: workDir)
+                .appendingPathComponent(".venv")
+                .appendingPathComponent("bin")
+                .appendingPathComponent("python")
+            
+            if FileManager.default.fileExists(atPath: venvPython.path) {
+                return venvPython
+            }
+        }
+        
+        // 4. Check for virtual environment in current directory
+        let currentDirVenv = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent(".venv")
+            .appendingPathComponent("bin")
+            .appendingPathComponent("python")
+        
+        if FileManager.default.fileExists(atPath: currentDirVenv.path) {
+            return currentDirVenv
+        }
+        
+        // 5. Final fallback
+        return systemPython
+    }
+    
     // MARK: - Script Execution
     
     /// Executes a Python script with the given parameters
@@ -24,13 +79,24 @@ actor PythonScriptExecutor {
         let process = Process()
         currentProcess = process
         
-        // Configure process
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        // Configure process - use virtual environment Python if available
+        process.executableURL = findPythonExecutable(workingDirectory: workingDirectory)
         process.arguments = [scriptPath] + arguments
         
         if let workingDirectory = workingDirectory {
             process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
         }
+        
+        // Set environment variables to include common binary paths
+        // This ensures tools like Ollama can be found
+        var environment = ProcessInfo.processInfo.environment
+        if let existingPath = environment["PATH"] {
+            // Add common binary locations to PATH
+            environment["PATH"] = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:\(existingPath)"
+        } else {
+            environment["PATH"] = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        }
+        process.environment = environment
         
         // Create pipes for stdout and stderr
         let outputPipe = Pipe()
