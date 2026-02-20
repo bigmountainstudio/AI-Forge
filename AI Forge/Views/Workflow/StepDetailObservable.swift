@@ -534,7 +534,7 @@ final class StepDetailObservable {
         switch stepNumber {
         case 1: scriptName = "copy_code_examples.py"
         case 2: scriptName = "generate_unified_dataset.py"
-        case 4: scriptName = "run_finetuning.py"
+        case 4: scriptName = "run_finetuning_mlx.py"  // MLX-based fine-tuning
         case 5: scriptName = "evaluate_overfitting.sh"
         case 6: scriptName = "convert_to_ollama.sh"
         default: return ""
@@ -571,16 +571,23 @@ final class StepDetailObservable {
         var arguments: [String] = []
         
         if let config = project.configuration {
-            // Step 4 (Run Fine-Tuning) needs all configuration parameters
+            // Step 4 (Run Fine-Tuning with MLX) needs all configuration parameters
             if stepNumber == 4 {
                 arguments.append(contentsOf: [
                     "--model", config.modelName,
                     "--learning-rate", String(config.learningRate),
                     "--batch-size", String(config.batchSize),
                     "--epochs", String(config.numberOfEpochs),
+                    "--max-seq-length", String(config.maxSequenceLength),
+                    "--lora-rank", String(config.loraRank),
                     "--output-dir", config.outputDirectory.isEmpty ? "models/" : config.outputDirectory,
-                    "--dataset-path", config.datasetPath.isEmpty ? "data/unified_finetune_dataset.jsonl" : config.datasetPath
+                    "--dataset", config.datasetPath.isEmpty ? "data/unified_train_dataset.jsonl" : config.datasetPath
                 ])
+                
+                // Add low-memory mode flag if enabled
+                if config.useLowMemoryMode {
+                    arguments.append("--low-memory")
+                }
             } else {
                 // Other steps may use subset of configuration
                 arguments.append(contentsOf: [

@@ -1,6 +1,7 @@
 // Copyright ©2026 Big Mountain Studio. All rights reserved. X: @BigMtnStudio
 
 import SwiftUI
+import SwiftData
 
 struct ConfigurationFormView: View {
     @Bindable var observable: StepDetailObservable
@@ -18,22 +19,33 @@ struct ConfigurationFormView: View {
     @Binding var showingEpochsInfo: Bool
     @Binding var showingOutputDirInfo: Bool
     
-    @State private var modelSelection: String = "qwen2.5-coder:7b"
-    let modelOptions = ["qwen2.5-coder:7b", "qwen2.5-coder:32b", "qwen3-coder:30b", "Other"]
+    @State private var modelSelection: String = "Qwen/Qwen2.5-Coder-7B-Instruct"
+    // MLX uses HuggingFace models instead of Ollama
+    let modelOptions = [
+        "Qwen/Qwen2.5-Coder-7B-Instruct",
+        "mistralai/Mistral-7B-Instruct-v0.1",
+        "meta-llama/Llama-2-7b-hf",
+        "Other"
+    ]
     
     var body: some View {
         Form {
-            Section("Model Configuration") {
+            Section("Model Configuration (MLX Fine-Tuning)") {
                 HStack {
-                    Picker("Model Name", selection: $modelSelection) {
+                    Picker("Model", selection: $modelSelection) {
                         ForEach(modelOptions, id: \.self) { option in
                             Text(option)
                                 .tag(option)
                         }
                     }
                     .pickerStyle(.menu)
-                    .accessibilityLabel("Model name")
-                    .accessibilityHint("Select a model or choose Other to enter custom name")
+                    .accessibilityLabel("Model name (HuggingFace)")
+                    .accessibilityHint("Select a HuggingFace model for MLX fine-tuning")
+                    .onChange(of: modelSelection) { oldValue, newValue in
+                        if newValue != "Other" {
+                            modelName = newValue
+                        }
+                    }
                     
                     Button {
                         showingModelNameInfo = true
@@ -43,27 +55,34 @@ struct ConfigurationFormView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Model name information")
-                    .accessibilityHint("Tap to learn more about the model name parameter")
+                    .accessibilityHint("Tap to learn more about available models")
                 }
                 
                 if modelSelection == "Other" {
-                    HStack {
-                        TextField("Custom Model Name", text: $modelName)
-                            .textFieldStyle(.roundedBorder)
-                            .accessibilityLabel("Custom model name")
-                            .accessibilityHint("Enter the name of the custom model to fine-tune")
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            TextField("HuggingFace Model ID", text: $modelName)
+                                .textFieldStyle(.roundedBorder)
+                                .accessibilityLabel("Custom model name")
+                                .accessibilityHint("Enter a HuggingFace model ID (e.g., Qwen/Qwen2.5-Coder-7B)")
+                            Spacer()
+                        }
+                        
+                        if modelName.contains(":") {
+                            Text("⚠️ MLX requires a HuggingFace repo ID, not an Ollama name.")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                        }
                     }
                 }
                 
                 HStack {
                     Text("Learning Rate")
-                    Spacer()
-                    TextField("0.0001", text: $learningRate)
+                    TextField("5e-5", text: $learningRate)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 120)
                         .accessibilityLabel("Learning rate")
-                        .accessibilityHint("Enter the learning rate as a decimal number")
+                        .accessibilityHint("Default for MLX: 5e-5")
                     
                     Button {
                         showingLearningRateInfo = true
@@ -73,20 +92,18 @@ struct ConfigurationFormView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Learning rate information")
-                    .accessibilityHint("Tap to learn more about the learning rate parameter")
                 }
                 
                 HStack {
                     Text("Batch Size")
-                    Spacer()
                     Text("\(batchSize)")
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
-                    Stepper("", value: $batchSize, in: 1...128)
+                    Stepper("", value: $batchSize, in: 1...8)
                         .labelsHidden()
                         .accessibilityLabel("Batch size")
                         .accessibilityValue("\(batchSize)")
-                        .accessibilityHint("Adjust the batch size between 1 and 128")
+                        .accessibilityHint("MLX safe range: 1-8 (lower = more stable)")
                     
                     Button {
                         showingBatchSizeInfo = true
@@ -96,20 +113,18 @@ struct ConfigurationFormView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Batch size information")
-                    .accessibilityHint("Tap to learn more about the batch size parameter")
                 }
                 
                 HStack {
                     Text("Number of Epochs")
-                    Spacer()
                     Text("\(numberOfEpochs)")
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
-                    Stepper("", value: $numberOfEpochs, in: 1...100)
+                    Stepper("", value: $numberOfEpochs, in: 1...10)
                         .labelsHidden()
                         .accessibilityLabel("Number of epochs")
                         .accessibilityValue("\(numberOfEpochs)")
-                        .accessibilityHint("Adjust the number of training epochs between 1 and 100")
+                        .accessibilityHint("Adjust between 1 and 10")
                     
                     Button {
                         showingEpochsInfo = true
@@ -118,8 +133,36 @@ struct ConfigurationFormView: View {
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Number of epochs information")
-                    .accessibilityHint("Tap to learn more about the epochs parameter")
+                    .accessibilityLabel("Epochs information")
+                }
+            }
+            
+            Section("MLX-Specific Options") {
+                if let config = observable.configuration {
+                    @Bindable var config = config
+                    Toggle("Low-Memory Mode", isOn: $config.useLowMemoryMode)
+                        .accessibilityHint("Reduces batch size to 1 for more stable training. Recommended for large datasets.")
+                    
+                    HStack {
+                        Text("Max Sequence Length")
+                        Text("\(config.maxSequenceLength)")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                        Stepper("", value: $config.maxSequenceLength, in: 128...512, step: 128)
+                            .labelsHidden()
+                            .accessibilityLabel("Max sequence length")
+                            .accessibilityValue("\(config.maxSequenceLength) tokens")
+                            .accessibilityHint("Reduce to 128 if getting memory errors")
+                    }
+                    
+                    HStack {
+                        Text("LoRA Rank")
+                        Text("\(config.loraRank)")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                        Stepper("", value: $config.loraRank, in: 4...32, step: 4)
+                            .labelsHidden()
+                    }
                 }
             }
             
@@ -127,8 +170,6 @@ struct ConfigurationFormView: View {
                 HStack {
                     TextField("Output Directory", text: $outputDirectory)
                         .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Output directory")
-                        .accessibilityHint("Path where model checkpoints will be saved")
                     
                     Button {
                         showingOutputPicker = true
@@ -136,7 +177,6 @@ struct ConfigurationFormView: View {
                         Image(systemName: "folder")
                     }
                     .accessibilityLabel("Choose output directory")
-                    .accessibilityHint("Opens a folder picker")
                     
                     Button {
                         showingOutputDirInfo = true
@@ -146,7 +186,6 @@ struct ConfigurationFormView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Output directory information")
-                    .accessibilityHint("Tap to learn more about the output directory")
                 }
             }
             
@@ -157,7 +196,6 @@ struct ConfigurationFormView: View {
                         HStack {
                             Label("Total Steps", systemImage: "number")
                                 .foregroundStyle(.secondary)
-                            Spacer()
                             Text("\(config.totalSteps)")
                                 .monospacedDigit()
                                 .fontWeight(.medium)
@@ -168,20 +206,18 @@ struct ConfigurationFormView: View {
                         HStack {
                             Label("Time Range", systemImage: "clock")
                                 .foregroundStyle(.secondary)
-                            Spacer()
                             Text("\(FineTuningConfigurationModel.formatTimeEstimate(optimistic)) - \(FineTuningConfigurationModel.formatTimeEstimate(conservative))")
                                 .monospacedDigit()
                                 .fontWeight(.medium)
                         }
                         
-                        Text("Estimate based on dataset size of \(config.datasetSize) examples. Actual time will be calculated after first 10-20 steps.")
+                        Text("MLX on Apple Silicon: ~4-6 seconds/step. Actual time calculated after 10-20 steps.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.top, 4)
                     }
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Estimated training time: \(config.totalSteps) steps, \(FineTuningConfigurationModel.formatTimeEstimate(config.estimatedTrainingTime().optimistic)) to \(FineTuningConfigurationModel.formatTimeEstimate(config.estimatedTrainingTime().conservative))")
             }
             
             if validationErrors.isEmpty == false {
@@ -200,36 +236,44 @@ struct ConfigurationFormView: View {
                         Text("Please correct the errors above before saving.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .padding(.top, 4)
                     }
                 }
             }
         }
-        .formStyle(.grouped)
-        .onAppear {
-            if modelName.isEmpty {
-                modelSelection = "qwen2.5-coder:7b"
-                modelName = "qwen2.5-coder:7b"
-            } else if modelOptions.contains(modelName) {
-                modelSelection = modelName
-            } else {
-                modelSelection = "Other"
-            }
-        }
-        .onChange(of: modelSelection) { oldValue, newValue in
-            if newValue != "Other" {
-                modelName = newValue
-            }
-        }
-        .onChange(of: batchSize) { oldValue, newValue in
-            // Update configuration dataset size when batch size changes
-            // This triggers re-calculation of time estimates
-            observable.configuration?.batchSize = newValue
-        }
-        .onChange(of: numberOfEpochs) { oldValue, newValue in
-            // Update configuration epochs when value changes
-            // This triggers re-calculation of time estimates
-            observable.configuration?.numberOfEpochs = newValue
-        }
     }
+}
+
+#Preview {
+    let container = ProjectModel.preview
+    let context = container.mainContext
+    let fileSystemManager = FileSystemManager()
+    let pythonExecutor = PythonScriptExecutor()
+    
+    @Bindable var observable = StepDetailObservable(
+        workflowEngine: WorkflowEngineObservable(
+            modelContext: context,
+            pythonExecutor: pythonExecutor,
+            fileSystemManager: fileSystemManager
+        ),
+        fileSystemManager: fileSystemManager,
+        pythonExecutor: pythonExecutor
+    )
+    observable.configuration = FineTuningConfigurationModel.mock
+    
+    return ConfigurationFormView(
+        observable: observable,
+        modelName: .constant("Qwen/Qwen2.5-Coder-7B-Instruct"),
+        learningRate: .constant("5e-5"),
+        batchSize: .constant(2),
+        numberOfEpochs: .constant(1),
+        outputDirectory: .constant("models/"),
+        validationErrors: .constant([]),
+        showingOutputPicker: .constant(false),
+        showingModelNameInfo: .constant(false),
+        showingLearningRateInfo: .constant(false),
+        showingBatchSizeInfo: .constant(false),
+        showingEpochsInfo: .constant(false),
+        showingOutputDirInfo: .constant(false)
+    )
+    .modelContainer(container)
 }

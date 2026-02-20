@@ -7,10 +7,10 @@ import SwiftData
 struct ConfigurationView: View {
     @Bindable var observable: StepDetailObservable
     
-    @State private var modelName: String = "qwen2.5-coder:7b"
-    @State private var learningRate: String = "0.0001"
-    @State private var batchSize: Int = 16
-    @State private var numberOfEpochs: Int = 3
+    @State private var modelName: String = "Qwen/Qwen2.5-Coder-7B-Instruct"
+    @State private var learningRate: String = "5e-5"
+    @State private var batchSize: Int = 2
+    @State private var numberOfEpochs: Int = 1
     @State private var outputDirectory: String = ""
     @State private var datasetPath: String = ""
     @State private var validationErrors: [String] = []
@@ -71,30 +71,30 @@ struct ConfigurationView: View {
             .onChange(of: observable.configuration) {
                 loadConfiguration()
             }
-            .alert("Model Name", isPresented: $showingModelNameInfo) {
+            .alert("Model Selection", isPresented: $showingModelNameInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("The identifier or name of the base language model to fine-tune. Examples: 'qwen2.5-coder:7b', 'llama-2-7b-chat'. This determines the starting point for your fine-tuning.")
+                Text("Select a HuggingFace model for MLX fine-tuning on Apple Silicon. Recommended 7B models for M-series Macs:\n\n• Qwen/Qwen2.5-Coder-7B-Instruct\n• mistralai/Mistral-7B-Instruct-v0.1\n• meta-llama/Llama-2-7b-hf\n\nLatest models work best for up-to-date knowledge. Larger models may require more memory.")
             }
             .alert("Learning Rate", isPresented: $showingLearningRateInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Controls how much the model's weights are updated during training. Lower values (like 0.0001) mean slower but more stable learning. Higher values learn faster but may be unstable. Typical range: 0.00001 to 0.001.")
+                Text("Controls training speed. MLX default: 5e-5 (0.00005)\n\n• Lower (1e-5): More stable but slower\n• Higher (1e-4): Faster but may diverge\n\nFor LoRA, 5e-5 is optimal. Avoid values > 1e-3.")
             }
             .alert("Batch Size", isPresented: $showingBatchSizeInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Number of training examples processed together in one forward/backward pass. Larger batches provide more stable gradients but require more memory. Smaller batches can fit better on limited hardware. Typical range: 1-32 for consumer GPUs.")
+                Text("Examples processed per step. MLX safe defaults:\n\n• Batch 1-2: Most stable (recommended)\n• Batch 2-4: Good balance\n• Batch >4: Higher memory usage\n\nM2 with 64GB RAM: Start with 2, reduce to 1 if OOM.\nUse Low-Memory Mode for safety.")
             }
             .alert("Number of Epochs", isPresented: $showingEpochsInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("How many times the model sees the entire training dataset. More epochs can improve learning but risk overfitting. Start with 3-5 epochs and evaluate performance. You can always continue training later.")
+                Text("Times through entire dataset.\n\n• Start with 1 epoch to verify setup\n• 2-3 epochs for good learning\n• >3 epochs risks overfitting\n\nMonitor training loss—stop if plateau or loss increases.")
             }
             .alert("Output Directory", isPresented: $showingOutputDirInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Directory where fine-tuned model checkpoints and the final model will be saved. Choose a location with sufficient storage space (models can be several GB). The directory will be created if it doesn't exist.")
+                Text("Folder for LoRA adapters (~100-500MB). MLX saves adapters separately from base model.\n\nDefault: models/adapters/\n\nChoose location with sufficient space.")
             }
 
     }

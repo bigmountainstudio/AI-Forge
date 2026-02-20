@@ -25,6 +25,21 @@ struct RunFineTuningView: View {
             // Timeline warning
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
+                    Image(systemName: "cpu.fill")
+                        .foregroundStyle(.green)
+                        .font(.title3)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("MLX Fine-Tuning on Apple Silicon")
+                            .font(.subheadline.weight(.semibold))
+                        
+                        Text("Optimized for M-series Macs with native Metal acceleration. Expect 4-6 seconds per training step.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                HStack(spacing: 12) {
                     Image(systemName: "clock.fill")
                         .foregroundStyle(.orange)
                         .font(.title3)
@@ -78,17 +93,23 @@ struct RunFineTuningView: View {
     
     private func configurationSection(_ config: FineTuningConfigurationModel) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Configuration")
+            Text("Configuration (MLX)")
                 .font(.headline)
             
             VStack(alignment: .leading, spacing: 8) {
                 configRow(label: "Model", value: config.modelName)
                 Divider()
-                configRow(label: "Learning Rate", value: String(format: "%.6f", config.learningRate))
+                configRow(label: "Learning Rate", value: String(format: "%.0e", config.learningRate))
                 Divider()
                 configRow(label: "Batch Size", value: "\(config.batchSize)")
                 Divider()
                 configRow(label: "Epochs", value: "\(config.numberOfEpochs)")
+                Divider()
+                configRow(label: "Max Sequence Length", value: "\(config.maxSequenceLength) tokens")
+                Divider()
+                configRow(label: "LoRA Rank", value: "\(config.loraRank)")
+                Divider()
+                configRow(label: "Low-Memory Mode", value: config.useLowMemoryMode ? "Enabled" : "Disabled")
             }
             .padding()
             .background(.regularMaterial, in: .rect(cornerRadius: 8))
@@ -167,7 +188,7 @@ struct RunFineTuningView: View {
                     }
                     
                     // Disclaimer
-                    Text("Actual time varies based on hardware performance and system load. Optimistic uses 5 sec/step, conservative uses 10 sec/step.")
+                    Text("MLX on Apple Silicon: ~4-6 sec/step. Optimistic uses 4.5 sec/step, conservative uses 5.85 sec/step (+30% buffer).")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .padding(.top, 4)

@@ -103,6 +103,9 @@ final class WorkflowEngineObservable {
     }
     
     func updateConfiguration(_ config: FineTuningConfigurationModel, for project: ProjectModel) async throws {
+        // Validate configuration before saving
+        try config.validate()
+        
         // Only insert if this is a different configuration object
         if project.configuration !== config {
             modelContext.insert(config)

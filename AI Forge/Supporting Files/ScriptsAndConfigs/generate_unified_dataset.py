@@ -568,20 +568,50 @@ def generate_code_dataset(examples: List[CodeExample]) -> List[Dict[str, str]]:
     return dataset
 
 
+def to_chat_messages(row: Dict[str, str]) -> Dict:
+    """Convert an instruction/input/output row to mlx-lm chat messages format.
+    
+    mlx-lm expects one of these JSONL formats:
+      1. {"messages": [{"role": "user", "content": ...}, {"role": "assistant", "content": ...}]}
+      2. {"prompt": ..., "completion": ...}
+      3. {"text": ...}
+    
+    This converts the instruction-tuning format to chat messages,
+    which works best with instruct/chat models.
+    """
+    if "messages" in row:
+        return row
+    
+    user_content = row.get("instruction", "")
+    if row.get("input"):
+        user_content += "\n" + row["input"]
+    
+    return {
+        "messages": [
+            {"role": "user", "content": user_content},
+            {"role": "assistant", "content": row.get("output", "")},
+        ]
+    }
+
+
 def save_unified_datasets(dataset: List[Dict[str, str]], output_dir: Path, 
                          train_ratio: float = 0.8) -> None:
-    """Save unified dataset with train/test split."""
+    """Save unified dataset with train/test split in mlx-lm chat messages format."""
     output_dir.mkdir(parents=True, exist_ok=True)
     random.shuffle(dataset)
 
+    # Convert all rows to mlx-lm compatible chat messages format
+    converted = [to_chat_messages(row) for row in dataset]
+    print(f"Converted {len(converted)} rows to chat messages format for mlx-lm")
+
     full_path = output_dir / "unified_finetune_dataset.jsonl"
     with full_path.open("w", encoding="utf-8") as f:
-        for row in dataset:
+        for row in converted:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    split = int(len(dataset) * train_ratio)
-    train_rows = dataset[:split]
-    test_rows = dataset[split:]
+    split = int(len(converted) * train_ratio)
+    train_rows = converted[:split]
+    test_rows = converted[split:]
 
     train_path = output_dir / "unified_train_dataset.jsonl"
     test_path = output_dir / "unified_test_dataset.jsonl"

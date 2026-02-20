@@ -20,6 +20,7 @@ applyTo: "**/*View.swift"
 - **Avoid**: `@Published` (`@Observable` already observes all public properties)
 - **Avoid** `cornerRadius(8)`, use `background(style, in: .rect(cornerRadius: 8))` or `.clipShape(.rect(cornerRadius: 8))` when appropriate.
 - **Prefer**: Static shapes like `.rect(cornerRadius:)` over shape objects like `RoundedRectangle(cornerRadius:)`.
+- **Avoid**: Do not add `accessibilityLabel`, `accessibilityHint`, or `accessibilityIdentifier`. This project is not for the public.
 
 ## Observables
 ```swift
