@@ -30,7 +30,7 @@ struct ContentView: View {
                 ContentUnavailableView {
                     Label("Select a Project", systemImage: "folder")
                 } description: {
-                    Text("Choose a project from the sidebar to view its workflow steps")
+                    Text("Choose a project from the sidebar to view its workflow steps or + to tune a new model.")
                 }
             }
         } detail: {

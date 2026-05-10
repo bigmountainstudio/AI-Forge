@@ -33,7 +33,7 @@ final class WorkflowStepModel {
             WorkflowStepModel(
                 stepNumber: 1,
                 title: "Prepare Source Files",
-                stepDescription: "Place source files in appropriate directories",
+                stepDescription: "Place source files (API docs or code examples) in appropriate directories",
                 icon: "document.badge.plus.fill"
             ),
             WorkflowStepModel(

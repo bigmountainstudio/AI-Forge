@@ -112,23 +112,6 @@ struct SourceFilesView: View {
                 categorySection(title: "Code Examples", files: codeExamples, icon: "chevron.left.forwardslash.chevron.right")
             }
             
-            HStack(spacing: 12) {
-                Button("Add API Docs", systemImage: "plus") {
-                    selectedPickerCategory = .apiDocumentation
-                    showingFilePicker = true
-                }
-                .buttonStyle(.bordered)
-                .accessibilityLabel("Add more API documentation")
-                
-                Button("Add Examples", systemImage: "plus") {
-                    selectedPickerCategory = .codeExamples
-                    showingFilePicker = true
-                }
-                .buttonStyle(.bordered)
-                .accessibilityLabel("Add more code examples")
-            }
-            .padding(.top, 8)
-            
             Divider()
             
             Button("Open Project Folder", systemImage: "folder") {
@@ -147,88 +130,92 @@ struct SourceFilesView: View {
     }
     
     private func categorySection(title: String, files: [SourceFileReference], icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        Section {
+            ForEach(files) { file in
+                HStack {
+                    Image(systemName: icon)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(file.fileName)
+                            .font(.body)
+                        
+                        HStack {
+                            Text(file.viewFileSizeFormatted)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            
+                            Text("•")
+                                .foregroundStyle(.secondary)
+                            
+                            Text(directoryPath(for: file.category))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .help(directoryPathTooltip(for: file.category))
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Button {
+                        Task {
+                            await observable.removeSourceFile(file)
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+                    .tint(.accentColor)
+                    .accessibilityLabel("Delete \(file.fileName)")
+                    .accessibilityHint("Removes this file from the project")
+                }
+                .contextMenu {
+                    Button(role: .destructive) {
+                        Task {
+                            await observable.removeSourceFile(file)
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .leading)))
+            }
+        } header: {
             HStack {
-                Label(title, systemImage: icon)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Label(title, systemImage: icon)
+                            .font(.title.weight(.semibold))
+                        
+                        Text("(\(files.count) file\(files.count == 1 ? "" : "s"))")
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Label(directoryPath(for: files.first?.category ?? .apiDocumentation), systemImage: "folder.fill")
+                        .padding()
+                        .help(directoryPathTooltip(for: files.first?.category ?? .apiDocumentation))
+                }
                 
                 Spacer()
                 
-                Text("\(files.count) file\(files.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Image(systemName: "folder.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                Button {
+                    if title == "API Documentation" {
+                        selectedPickerCategory = .apiDocumentation
+                    } else {
+                        // Code Examples
+                        selectedPickerCategory = .codeExamples
+                    }
                     
-                    Text(directoryPath(for: files.first?.category ?? .apiDocumentation))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .help(directoryPathTooltip(for: files.first?.category ?? .apiDocumentation))
+                    showingFilePicker = true
+                } label: {
+                    Image(systemName: "plus.circle")
+                        .font(.title)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(.regularMaterial, in: .rect(cornerRadius: 6))
+                .buttonBorderShape(.circle)
             }
-            
-            List {
-                ForEach(files) { file in
-                    HStack {
-                        Image(systemName: icon)
-                            .foregroundStyle(.blue)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(file.fileName)
-                                .font(.body)
-                            
-                            HStack {
-                                Text(file.viewFileSizeFormatted)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                
-                                Text("•")
-                                    .foregroundStyle(.secondary)
-                                
-                                Text(directoryPath(for: file.category))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .help(directoryPathTooltip(for: file.category))
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        Button {
-                            Task {
-                                await observable.removeSourceFile(file)
-                            }
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundStyle(.red)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Delete \(file.fileName)")
-                        .accessibilityHint("Removes this file from the project")
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            Task {
-                                await observable.removeSourceFile(file)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .transition(.opacity.combined(with: .move(edge: .leading)))
-                }
-            }
-            .frame(minHeight: 100)
         }
+        .padding()
+        .background(.quaternary, in: .rect(cornerRadius: 8))
     }
     
     private func directoryPath(for category: SourceFileCategory) -> String {
@@ -296,5 +283,6 @@ struct SourceFilesView: View {
     observable.sourceFiles = SourceFileReference.mocks
     
     return SourceFilesView(observable: observable)
+        .frame(minHeight: 600)
         .padding()
 }

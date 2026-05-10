@@ -230,7 +230,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Verify no regressions in existing functionality
   - Ask the user if questions arise
 
-- [ ] 15. Integration testing with existing workflow
+- [x] 15. Integration testing with existing workflow
   - Test that SourceFilesView integrates correctly with StepDetailView
   - Test that file selection works with existing project structure
   - Test that subsequent steps can access file organization information
@@ -238,7 +238,7 @@ The implementation follows the existing SwiftUI patterns in AI Forge, using `@Ob
   - Test complete workflow from file selection through step completion
   - _Requirements: 1.1, 2.1, 6.6, 7.1, 7.2, 7.3_
 
-- [ ] 16. Final checkpoint - Ensure all tests pass and feature is complete
+- [x] 16. Final checkpoint - Ensure all tests pass and feature is complete
   - Run all tests one final time
   - Verify all requirements are met
   - Check that design properties are validated
